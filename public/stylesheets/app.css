@@ -1,0 +1,143 @@
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: url('../fonts/SourceSansPro-Regular.ttf');
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  font-family:
+    Source Sans Pro,
+    sans-serif;
+}
+
+body {
+  background: linear-gradient(to top right, #18c9fa4d 30%, #f4f6fd 70%);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: #2bcbdf;
+}
+
+main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+main > section {
+  display: flex;
+  flex-direction: column;
+  margin: auto;
+  width: 940px;
+  gap: 64px;
+}
+
+.title {
+  color: #333;
+  font-weight: 600;
+  margin: 0;
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+
+h1 {
+  font-size: 58px;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+.header-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1em;
+  padding: 0 2em;
+}
+
+.header-container > img {
+  height: 24px;
+  width: auto;
+}
+
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(1, 1fr);
+  gap: 32px;
+  padding: 0 2em;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  background-color: white;
+  border-radius: 8px;
+  padding: 40px;
+}
+
+.card > .icon {
+  width: 60px;
+  height: 60px;
+}
+
+.card > .card-content {
+  color: #666;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+footer {
+  color: #1a1a1a;
+  padding: 2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+@media screen and (max-width: 1024px) {
+  main > section {
+    width: 100%;
+  }
+
+  .card {
+    flex-direction: row;
+    height: fit-content;
+  }
+
+  .cards-container {
+    grid-template-columns: repeat(1, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+  }
+}
+
+@media screen and (max-width: 480px) {
+  html, body {
+    height: auto;
+    width: 100%;
+  }
+
+  .header-container > img {
+    height: auto;
+    width: 100%;
+  }
+
+  main {
+    padding-top: 2em;
+  }
+
+  .card {
+    flex-direction: column;
+  }
+}
