@@ -2,6 +2,8 @@ import {
   Injectable,
   BadRequestException,
   InternalServerErrorException,
+  Res,
+  HttpStatus,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -16,6 +18,7 @@ import { Payment, PaymentDocument } from '../schemas/payment.schema';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { LoginDto } from '../user/dto/login.dto';
 import { UpdateUserDto } from '../user/dto/update-user.dto';
+import { CheckUserExistsDto } from './dto/check-user-exist.dto';
 
 dotenv.config();
 
@@ -154,4 +157,24 @@ export class UserService {
       throw new InternalServerErrorException(error.message);
     }
   }
+
+  async checkEmailExist(body: CheckUserExistsDto,res) {
+    const { email } = body;
+try{
+   const userExists = await this.userModel.findOne({ email });
+    if (userExists) {
+     
+      return res.status(HttpStatus.BAD_REQUEST).send({message:'User already exists'})
+    }else{
+      return res.status(HttpStatus.OK).send({user:userExists})
+    }
+}catch(error:any){
+throw new InternalServerErrorException(error.message);
 }
+ }
+}
+
+
+
+   
+  

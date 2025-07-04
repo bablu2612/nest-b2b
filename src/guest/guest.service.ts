@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { error } from 'console';
 
 import { writeFile, mkdir } from 'fs/promises';
@@ -16,7 +16,7 @@ export class GuestService {
      
     ) {}
    
-  async createGuest (files:Express.Multer.File[],body:any,user_id:any){
+  async createGuest (files:Express.Multer.File[],body:any,user_id:any,res){
  
     try{  
       const {first_name,last_name,company_name,nationality,document_type,document_number,telephone,email,check_in,check_out,message,...addressInfo}=body
@@ -28,7 +28,11 @@ export class GuestService {
     if (!fs.existsSync(folderPath)) {
           await mkdir(path.dirname(folderPath), { recursive: true });
         } 
-
+    const userExists = await this.guestModel.findOne({ email });
+    if (userExists) {
+      // throw new BadRequestException('Guest already exists');
+        return res.status(HttpStatus.BAD_REQUEST).send({message:'Guest already exists'})
+    }
     const fileData: string[] = []; 
 
     for (const file of files) {
@@ -55,7 +59,7 @@ export class GuestService {
           check_out,
           message,
           images: fileData,
-          user_id:user_id
+          user_id:new Types.ObjectId(user_id)
       }
       
       
@@ -65,7 +69,8 @@ export class GuestService {
       }
       
       await this.addressModel.create(addressData)
-      return {message:"Guest ragister successfully"}
+      // return {message:"Guest ragister successfully"}
+      return res.status(HttpStatus.CREATED).send({message:"Guest ragister successfully"})
     }catch(error){
       throw new InternalServerErrorException(error.message);
     }
@@ -73,8 +78,8 @@ export class GuestService {
 
   async getAllGuest (user_id:string){
      const guestData = await this.guestModel.aggregate([
-      // { $match: { user_id : new Types.ObjectId(user_id)} },
-      //  { $match: { user_id: new Types.ObjectId(user_id) } },
+        { $match: { user_id: new Types.ObjectId(user_id) } },
+      
       {
         $lookup: {
           from: 'addresses',
@@ -91,23 +96,121 @@ export class GuestService {
           as: 'userData',
         },
       },
-//       {
-//   $project: {
-//     guest: {
-//       $filter: {
-//         input: '$guest',
-//         as: 'g',
-//         cond: {
-//           $eq: ['$$g.user_id', new Types.ObjectId(user_id)],
-//         },
-//       },
-//     },
-//   },
-// }
-      
+      {
+        $unwind:'$userData'
+      }
+     
+      //  {
+      // $project: {
+      //    guest: {
+      //       $filter: {
+      //          input: "$guest",
+      //          as: "g",
+      //          cond: { $eq: [ "$$g.user_id",new Types.ObjectId(user_id)  ] }
+      //       }
+      //    }
+      // }
+  //  }
     ]);
     return {guest:guestData};
 
   }
   
+    async searchGuest (req){
+      
+      const {search} = req.query
+     const searchParse = JSON.parse(search);
+
+       console.log("search",search,"parse",searchParse)
+  //    searchParse.map((value)=>{
+   
+  //    const  keys=value.key.split('.')
+  // //  console.log("value",value)
+
+  //  console.log("arr",keys)
+
+   
+  // })
+let pipeline:any []=[]
+let matchConditions: { [key: string]: any }[] = [];
+
+   if (searchParse && Array.isArray(searchParse) ) {
+        searchParse.forEach((obj) => {
+            const { key, value } = obj; 
+            console.log("key, value",key, value)
+            if (key && value) {
+                // pipeline.push({
+                //     $addFields: {
+                //         [`normalized_data_${key}`]: {
+                //             $toLower: {
+                //                 $trim: {
+                //                     input: { $toString: `$${key}` }
+                //                 }
+                //             }
+                //         }
+                //     }
+                // });
+
+                    const  keys=key.split('.')
+                      console.log("keyssss, value",keys)
+                        if(keys.length > 1){
+                          matchConditions.push({
+                            ['addressData.'+keys[1]]:  value.toString().toLowerCase().trim()
+                        });
+                  }else{
+                      matchConditions.push({
+                    
+                         [keys[0]]:  value.toString().toLowerCase().trim()
+                    });
+                  }
+             
+                
+            }
+          })
+
+        }
+          if (matchConditions.length > 0) {
+        pipeline.push({
+            $match: { $and: matchConditions },
+          });
+      }
+      // console.log("matchConditions",matchConditions)
+    const guestData = await this.guestModel.aggregate([
+      {
+        $lookup: {
+          from: 'addresses',
+          localField: '_id',
+          foreignField: 'guest_id',
+          as: 'addressData',
+        },
+      },
+       {
+        $unwind:'$addressData'
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user_id',
+          foreignField: '_id',
+          as: 'userData',
+        },
+      },
+      {
+        $unwind:'$userData'
+      },
+      ...pipeline
+    //  { $match: { $and: [
+    //     //  { first_name: 'bablu' },
+  
+    //     { 'addressData.street_name': 'testbuilfd' },
+    //     { 'addressData.building_no': '12341' },
+    //     { 'addressData.appartment_no': '3452' },
+    //   ] }},
+     
+    ]);
+    return {guest:guestData};
+  }
 }
+
+
+

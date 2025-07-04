@@ -9,6 +9,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Res,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 // import { CreateUserDto, LoginDto, UpdateUserDto, DeleteUserDto } from './dto';
@@ -18,6 +19,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 // import { DeleteUserDto } from './dto/delete-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Request } from 'express';
+import { CheckUserExistsDto } from './dto/check-user-exist.dto';
 
 @Controller('user')
 export class UserController {
@@ -53,7 +55,11 @@ export class UserController {
     const { email } = req.user as any;
     return this.userService.getCurrentUser(email);
   }
-
+@Post('check-email-exist')
+  async checkEmailExist(@Body() body: CheckUserExistsDto,@Res() res:Response) {
+    
+    return this.userService.checkEmailExist(body,res);
+  }
 
   // @UseGuards(JwtAuthGuard)
   // @Put('delete')
