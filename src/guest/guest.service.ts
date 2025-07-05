@@ -118,7 +118,7 @@ export class GuestService {
   
     async searchGuest (req){
       
-      const {search} = req.query
+      const {search,type} = req.query
      const searchParse = JSON.parse(search);
 
        console.log("search",search,"parse",searchParse)
@@ -133,83 +133,85 @@ export class GuestService {
   // })
 let pipeline:any []=[]
 let matchConditions: { [key: string]: any }[] = [];
-
-   if (searchParse && Array.isArray(searchParse) ) {
-        searchParse.forEach((obj) => {
-            const { key, value } = obj; 
-            console.log("key, value",key, value)
-            if (key && value) {
-                // pipeline.push({
-                //     $addFields: {
-                //         [`normalized_data_${key}`]: {
-                //             $toLower: {
-                //                 $trim: {
-                //                     input: { $toString: `$${key}` }
-                //                 }
-                //             }
-                //         }
-                //     }
-                // });
-
-                    const  keys=key.split('.')
-                      console.log("keyssss, value",keys)
-                        if(keys.length > 1){
-                          matchConditions.push({
-                            ['addressData.'+keys[1]]:  value.toString().toLowerCase().trim()
-                        });
-                  }else{
-                      matchConditions.push({
-                    
-                         [keys[0]]:  value.toString().toLowerCase().trim()
-                    });
-                  }
-             
-                
-            }
-          })
-
+let comanyMatch={}
+let guestData:any
+if(type === 'all'){
+  if (searchParse && Array.isArray(searchParse) ) {
+    searchParse.forEach((obj) => {
+        const { key, value } = obj; 
+        console.log("key, value",key, value)
+        if (key && value) {
+                      
+          matchConditions.push({
+        
+             [key]: value.toString().toLowerCase().trim()
+        });
+              
+            
         }
-          if (matchConditions.length > 0) {
-        pipeline.push({
-            $match: { $and: matchConditions },
-          });
-      }
-      // console.log("matchConditions",matchConditions)
-    const guestData = await this.guestModel.aggregate([
-      {
-        $lookup: {
-          from: 'addresses',
-          localField: '_id',
-          foreignField: 'guest_id',
-          as: 'addressData',
-        },
-      },
-       {
-        $unwind:'$addressData'
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'user_id',
-          foreignField: '_id',
-          as: 'userData',
-        },
-      },
-      {
-        $unwind:'$userData'
-      },
-      ...pipeline
-    //  { $match: { $and: [
-    //     //  { first_name: 'bablu' },
+      })
+
+    }
+    if (matchConditions.length > 0) {
+      pipeline.push({
+          $match: { $and: matchConditions },
+        });
+    }
+     guestData=await this.getSearchGuest(pipeline)
+    console.log("matchConditions",matchConditions)
+
+}else if(type === "company"){
+  console.log("searchParse",searchParse[0])
+  comanyMatch={$match: { 'company_name': searchParse[0].value.toString().toLowerCase().trim() }}
+  guestData = await this.getSearchGuest([comanyMatch])
   
-    //     { 'addressData.street_name': 'testbuilfd' },
-    //     { 'addressData.building_no': '12341' },
-    //     { 'addressData.appartment_no': '3452' },
-    //   ] }},
-     
-    ]);
+
+}
+    
+    
     return {guest:guestData};
   }
+
+
+
+
+ async getSearchGuest(pipeline){
+  const guestData = await this.guestModel.aggregate([
+    {
+      $lookup: {
+        from: 'addresses',
+        localField: '_id',
+        foreignField: 'guest_id',
+        as: 'addressData',
+      },
+    },
+     {
+      $unwind:'$addressData'
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user_id',
+        foreignField: '_id',
+        as: 'userData',
+      },
+    },
+    {
+      $unwind:'$userData'
+    },
+    ...pipeline
+  //  { $match: { $and: [
+  //     //  { first_name: 'bablu' },
+
+  //     { 'addressData.street_name': 'testbuilfd' },
+  //     { 'addressData.building_no': '12341' },
+  //     { 'addressData.appartment_no': '3452' },
+  //   ] }},
+   
+  ]);
+  return guestData
+}
+
 }
 
 
