@@ -117,59 +117,70 @@ export class GuestService {
   }
   
     async searchGuest (req){
-      
       const {search,type} = req.query
-     const searchParse = JSON.parse(search);
+      const searchParse = JSON.parse(search);
+      let pipeline:any []=[]
+      let matchConditions: { [key: string]: any }[] = [];
+      let comanyMatch={}
+      let guestData:any
+      if (searchParse && Array.isArray(searchParse) ) {
+       if(type === 'all'){
+          searchParse.forEach((obj) => {
+              const { key, value } = obj; 
+              if (key && value) {         
+                matchConditions.push({
+                  [key]: value.toString().toLowerCase().trim()
+                });
+              }
+          })
+          if (matchConditions.length > 0) {
+            pipeline.push({
+                $match: { $and: matchConditions },
+              });
+          }
+          guestData=await this.getSearchGuest(pipeline)
 
-       console.log("search",search,"parse",searchParse)
-  //    searchParse.map((value)=>{
-   
-  //    const  keys=value.key.split('.')
-  // //  console.log("value",value)
+        }else if(type === "company"){
+          comanyMatch={$match: { 'company_name': searchParse[0].value.toString().toLowerCase().trim() }}
+          guestData = await this.getSearchGuest([comanyMatch])
+          
+        }else if(type === "atleastThree"){
+          const minMatch = 3;
+            searchParse.forEach((obj) => {
+              const { key, value } = obj; 
+              if (key && value) {         
+                matchConditions.push({
+                   $cond: [
+                      { $eq: [ { $toLower: `$${key}` }, value.toString().toLowerCase().trim() ] },
+                      1,
+                      0
+                    ],
+                });
+              }
+            })
 
-  //  console.log("arr",keys)
-
-   
-  // })
-let pipeline:any []=[]
-let matchConditions: { [key: string]: any }[] = [];
-let comanyMatch={}
-let guestData:any
-if(type === 'all'){
-  if (searchParse && Array.isArray(searchParse) ) {
-    searchParse.forEach((obj) => {
-        const { key, value } = obj; 
-        console.log("key, value",key, value)
-        if (key && value) {
-                      
-          matchConditions.push({
-        
-             [key]: value.toString().toLowerCase().trim()
-        });
-              
+            if (matchConditions.length > 0) {
+            pipeline.push({
+              $match: {
+                $expr: {
+                  $gte: [
+                    {
+                      $sum: [...matchConditions],
+                    },
+                    minMatch
+                  ]
+                }
+              }
             
+              });
+          }
+          guestData=await this.getSearchGuest(pipeline)
+          console.log("matchConditions",matchConditions)
         }
-      })
-
-    }
-    if (matchConditions.length > 0) {
-      pipeline.push({
-          $match: { $and: matchConditions },
-        });
-    }
-     guestData=await this.getSearchGuest(pipeline)
-    console.log("matchConditions",matchConditions)
-
-}else if(type === "company"){
-  console.log("searchParse",searchParse[0])
-  comanyMatch={$match: { 'company_name': searchParse[0].value.toString().toLowerCase().trim() }}
-  guestData = await this.getSearchGuest([comanyMatch])
-  
-
-}
-    
-    
-    return {guest:guestData};
+      }
+          
+          
+          return {guest:guestData};
   }
 
 
@@ -200,13 +211,7 @@ if(type === 'all'){
       $unwind:'$userData'
     },
     ...pipeline
-  //  { $match: { $and: [
-  //     //  { first_name: 'bablu' },
-
-  //     { 'addressData.street_name': 'testbuilfd' },
-  //     { 'addressData.building_no': '12341' },
-  //     { 'addressData.appartment_no': '3452' },
-  //   ] }},
+  
    
   ]);
   return guestData
