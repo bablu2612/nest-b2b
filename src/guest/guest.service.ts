@@ -117,74 +117,69 @@ export class GuestService {
   }
   
     async searchGuest (req){
-      const {search,type} = req.query
+      const {search} = req.query
       const searchParse = JSON.parse(search);
       let pipeline:any []=[]
+      let anyThreePipeline:any []=[]
       let matchConditions: { [key: string]: any }[] = [];
-      let comanyMatch={}
-      let guestData:any
+      let anyThreeMatchConditions: { [key: string]: any }[] = [];
+      let comanyMatch={};
+      let typeAllMatch:any;
+      let typeComapnyMatch:any;
+      let typeThreeMatch:any;
+      const minMatch = 3;
+
+
       if (searchParse && Array.isArray(searchParse) ) {
-       if(type === 'all'){
-          searchParse.forEach((obj) => {
-              const { key, value } = obj; 
-              if (key && value) {         
-                matchConditions.push({
-                  [key]: value.toString().toLowerCase().trim()
-                });
-              }
-          })
-          if (matchConditions.length > 0) {
-            pipeline.push({
-                $match: { $and: matchConditions },
+        searchParse.forEach((obj) => {
+          const { key, value } = obj; 
+          if (key && value) {   
+            //  match all data      
+              matchConditions.push({
+                [key]: value.toString().toLowerCase().trim()
               });
-          }
-          guestData=await this.getSearchGuest(pipeline)
-
-        }else if(type === "company"){
-          comanyMatch={$match: { 'company_name': searchParse[0].value.toString().toLowerCase().trim() }}
-          guestData = await this.getSearchGuest([comanyMatch])
-          
-        }else if(type === "atleastThree"){
-          const minMatch = 3;
-            searchParse.forEach((obj) => {
-              const { key, value } = obj; 
-              if (key && value) {         
-                matchConditions.push({
-                   $cond: [
-                      { $eq: [ { $toLower: `$${key}` }, value.toString().toLowerCase().trim() ] },
-                      1,
-                      0
-                    ],
-                });
-              }
-            })
-
-            if (matchConditions.length > 0) {
-            pipeline.push({
-              $match: {
-                $expr: {
-                  $gte: [
-                    {
-                      $sum: [...matchConditions],
-                    },
-                    minMatch
-                  ]
-                }
-              }
+            //match company name
+            if(key === "company_name"){
+              comanyMatch={$match: { 'company_name': value.toString().toLowerCase().trim() }}
             
-              });
+            }
+            //match any three data
+            anyThreeMatchConditions.push({
+                  $cond: [
+                    { $eq: [ { $toLower: `$${key}` }, value.toString().toLowerCase().trim() ] },
+                    1,
+                    0
+                  ],
+            });
           }
-          guestData=await this.getSearchGuest(pipeline)
-          console.log("matchConditions",matchConditions)
-        }
+        }) 
       }
           
-          
-          return {guest:guestData};
+      if (matchConditions.length > 0) {
+        pipeline.push({
+            $match: { $and: matchConditions },
+          });
+      }
+
+      typeAllMatch=await this.getSearchGuest(pipeline);
+      typeComapnyMatch = await this.getSearchGuest([comanyMatch])
+      if (anyThreeMatchConditions.length > 0) {
+        anyThreePipeline.push({
+          $match: {
+            $expr: {
+              $gte: [
+                {
+                  $sum: [...anyThreeMatchConditions],
+                },
+                minMatch
+              ]
+            }
+          }
+        });
+      }
+      typeThreeMatch = await this.getSearchGuest(anyThreePipeline)
+      return {accurateMatch: typeAllMatch, sameCompanyData: typeComapnyMatch, partisalMatch: typeThreeMatch};
   }
-
-
-
 
  async getSearchGuest(pipeline){
   const guestData = await this.guestModel.aggregate([
