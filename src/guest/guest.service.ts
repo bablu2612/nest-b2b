@@ -219,12 +219,12 @@ export class GuestService {
 
 
   async searchGuestName (req){
-      const {first_name = "",last_name = ""} = req.query
-      console.log("first",first_name)
+      const {search} = req.query
+      
       try{
         const guest=await this.guestModel.find({
-          first_name:{$regex: first_name.trim(), $options:"i"},
-          last_name:{$regex: last_name.trim(), $options:"i"}
+         $or:[{first_name:{$regex: search.trim(), $options:"i"}},{last_name:{$regex: search.trim(), $options:"i"}}] 
+          // last_name:{$regex: search.trim(), $options:"i"}
         }) 
 
         return {guest}
