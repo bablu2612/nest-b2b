@@ -25,6 +25,11 @@ export class CreateUserDto {
   @IsOptional()
   paymentId?: string;
 
+  @IsOptional()
+  paymentMode?: string;
+
+  
+
   // Optional fields to pass company data
   @IsOptional() company_name?: string;
   @IsOptional() street_name?: string;

@@ -19,6 +19,11 @@ export class Payment {
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   user_id: Types.ObjectId;
+  
+   @Prop()
+  paymentMode: string;
+
+  
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment);

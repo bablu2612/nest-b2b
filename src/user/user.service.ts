@@ -36,7 +36,7 @@ export class UserService {
   ) {}
 
   async createUser(dto: CreateUserDto) {
-    const { email, password, amount, currency = 'chf', paymentId, ...companyInfo } = dto;
+    const { email, password, amount, currency = 'chf', paymentMode,paymentId, ...companyInfo } = dto;
 
     const userExists = await this.userModel.findOne({ email });
     if (userExists) {
@@ -44,8 +44,8 @@ export class UserService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await this.userModel.create({ ...dto, password: hashedPassword });
-
+    const user = await this.userModel.create({ ...dto, status : (paymentMode === "bank transfer" && !paymentId)  ? "pending" :"approved", password: hashedPassword });
+      
     await this.companyModel.create({ ...companyInfo, user_id: user._id });
 
     const price = amount / 100;
@@ -55,10 +55,11 @@ export class UserService {
       currency,
       paymentId,
       current_date: new Date(),
+      paymentMode: paymentMode
     });
-
+    const { password: _, ...userWithoutPassword } = user.toObject(); 
     const token = this.jwtService.sign({ id: user._id, email: user.email });
-    return { message: 'User created successfully', token };
+    return { message: 'User created successfully', token, user: userWithoutPassword };
   }
 
   async getAllUsers() {
@@ -71,11 +72,19 @@ export class UserService {
           as: 'companyData',
         },
       },
+      {
+        $lookup: {
+          from: 'payments',
+          localField: '_id',
+          foreignField: 'user_id',
+          as: 'paymentData',
+        },
+      },
       { $project: { password: 0 } },
     ]);
   }
 
-  async getUser(id: string) {
+  async getUser(id) {
     const [user] = await this.userModel.aggregate([
       { $match: { _id: new Types.ObjectId(id) } },
       {
@@ -84,6 +93,14 @@ export class UserService {
           localField: '_id',
           foreignField: 'user_id',
           as: 'companyData',
+        },
+      },
+       {
+        $lookup: {
+          from: 'payments',
+          localField: '_id',
+          foreignField: 'user_id',
+          as: 'paymentData',
         },
       },
       { $project: { password: 0 } },

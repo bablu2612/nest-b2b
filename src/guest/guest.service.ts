@@ -33,7 +33,7 @@ export class GuestService {
       // throw new BadRequestException('Guest already exists');
         return res.status(HttpStatus.BAD_REQUEST).send({message:'Guest already exists'})
     }
-    const fileData: string[] = []; 
+    const fileData: string[] = [];
 
     for (const file of files) {
         const ext=file.originalname.split('.').pop()
@@ -118,99 +118,134 @@ export class GuestService {
   
     async searchGuest (req){
       const {search} = req.query
-      const searchParse = JSON.parse(search);
-      let pipeline:any []=[]
-      let anyThreePipeline:any []=[]
-      let matchConditions: { [key: string]: any }[] = [];
-      let anyThreeMatchConditions: { [key: string]: any }[] = [];
-      let comanyMatch={};
-      let typeAllMatch:any;
-      let typeComapnyMatch:any;
-      let typeThreeMatch:any;
-      const minMatch = 3;
+      try{
+        const searchParse = JSON.parse(search);
+        let pipeline:any []=[]
+        let anyThreePipeline:any []=[]
+        let matchConditions: { [key: string]: any }[] = [];
+        let anyThreeMatchConditions: { [key: string]: any }[] = [];
+        let comanyMatch={};
+        let typeAllMatch:any;
+        let typeComapnyMatch:any;
+        let typeThreeMatch:any;
+        const minMatch = 3;
 
-
-      if (searchParse && Array.isArray(searchParse) ) {
-        searchParse.forEach((obj) => {
-          const { key, value } = obj; 
-          if (key && value) {   
-            //  match all data      
-              matchConditions.push({
-                [key]: value.toString().toLowerCase().trim()
+        if (searchParse && Array.isArray(searchParse) ) {
+          searchParse.forEach((obj) => {
+            const { key, value } = obj; 
+            if (key && value) {   
+              //  match all data      
+                matchConditions.push({
+                  [key]: value.toString().toLowerCase().trim()
+                });
+              //match company name
+              if(key === "company_name"){
+                comanyMatch={$match: { 'company_name': value.toString().toLowerCase().trim() }}
+              
+              }
+              //match any three data
+              anyThreeMatchConditions.push({
+                    $cond: [
+                      { $eq: [ { $toLower: `$${key}` }, value.toString().toLowerCase().trim() ] },
+                      1,
+                      0
+                    ],
               });
-            //match company name
-            if(key === "company_name"){
-              comanyMatch={$match: { 'company_name': value.toString().toLowerCase().trim() }}
-            
             }
-            //match any three data
-            anyThreeMatchConditions.push({
-                  $cond: [
-                    { $eq: [ { $toLower: `$${key}` }, value.toString().toLowerCase().trim() ] },
-                    1,
-                    0
-                  ],
-            });
-          }
-        }) 
-      }
+          }) 
+        }
           
-      if (matchConditions.length > 0) {
-        pipeline.push({
-            $match: { $and: matchConditions },
-          });
-      }
+        if (matchConditions.length > 0) {
+          pipeline.push({
+              $match: { $and: matchConditions },
+            });
+        }
 
-      typeAllMatch=await this.getSearchGuest(pipeline);
-      typeComapnyMatch = await this.getSearchGuest([comanyMatch])
-      if (anyThreeMatchConditions.length > 0) {
-        anyThreePipeline.push({
-          $match: {
-            $expr: {
-              $gte: [
-                {
-                  $sum: [...anyThreeMatchConditions],
-                },
-                minMatch
-              ]
+        typeAllMatch=await this.getSearchGuest(pipeline);
+        typeComapnyMatch = await this.getSearchGuest([comanyMatch])
+        if (anyThreeMatchConditions.length > 0) {
+          anyThreePipeline.push({
+            $match: {
+              $expr: {
+                $gte: [
+                  {
+                    $sum: [...anyThreeMatchConditions],
+                  },
+                  minMatch
+                ]
+              }
             }
-          }
-        });
-      }
-      typeThreeMatch = await this.getSearchGuest(anyThreePipeline)
-      return {accurateMatch: typeAllMatch, sameCompanyData: typeComapnyMatch, partisalMatch: typeThreeMatch};
+          });
+        }
+        typeThreeMatch = await this.getSearchGuest(anyThreePipeline)
+        return {accurateMatch: typeAllMatch, sameCompanyData: typeComapnyMatch, partisalMatch: typeThreeMatch};
+
+    }catch(err){
+       throw new InternalServerErrorException(err.message);
+    }
+     
   }
 
- async getSearchGuest(pipeline){
-  const guestData = await this.guestModel.aggregate([
-    {
-      $lookup: {
-        from: 'addresses',
-        localField: '_id',
-        foreignField: 'guest_id',
-        as: 'addressData',
+  async getSearchGuest(pipeline){
+    const guestData = await this.guestModel.aggregate([
+      {
+        $lookup: {
+          from: 'addresses',
+          localField: '_id',
+          foreignField: 'guest_id',
+          as: 'addressData',
+        },
       },
-    },
-     {
-      $unwind:'$addressData'
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'user_id',
-        foreignField: '_id',
-        as: 'userData',
+      {
+        $unwind:'$addressData'
       },
-    },
-    {
-      $unwind:'$userData'
-    },
-    ...pipeline
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user_id',
+          foreignField: '_id',
+          as: 'userData',
+        },
+      },
+      {
+        $unwind:'$userData'
+      },
+      ...pipeline
+    
+    
+    ]);
+    return guestData
+  }
+
+
+  async searchGuestName (req){
+      const {first_name = "",last_name = ""} = req.query
+      console.log("first",first_name)
+      try{
+        const guest=await this.guestModel.find({
+          first_name:{$regex: first_name.trim(), $options:"i"},
+          last_name:{$regex: last_name.trim(), $options:"i"}
+        }) 
+
+        return {guest}
+
+      }catch(err){
+    throw new InternalServerErrorException(err.message);
+    }
+  }
+
+async getGuestById (req){
+      const {id} = req.params
+      let idMatch
+      try{
+        idMatch={$match: { _id: new Types.ObjectId(id) }}
+        const [guest] = await this.getSearchGuest([idMatch])
+        return { guest }
+      }catch(err){
+    throw new InternalServerErrorException(err.message);
+    }
+  }
   
-   
-  ]);
-  return guestData
-}
 
 }
 

@@ -24,18 +24,27 @@ export class GuestController {
  @UseGuards(JwtAuthGuard)
      @Get('getAllGuest')
       async getAllGuest(@Req() req: Request )  {
-
         const { id } = (req as Request & { user: any }).user;
         return this.guestService.getAllGuest(id);
     }
 
  @UseGuards(JwtAuthGuard)
      @Get('searchGuest')
-      async searchGuest(@Req() req: Request )  {
-
-        
-        return this.guestService.searchGuest(req);
+       async searchGuest(@Req() req: Request )  {
+       return this.guestService.searchGuest(req);
     }
+    @UseGuards(JwtAuthGuard)
+     @Get('searchGuestByName')
+       async searchGuestName(@Req() req: Request )  {
+       return this.guestService.searchGuestName(req);
+    }
+
+    @UseGuards(JwtAuthGuard)
+     @Get('getGuest/:id')
+       async getGuestById(@Req() req: Request )  {
+       return this.guestService.getGuestById(req);
+    }
+
 
 }
  
