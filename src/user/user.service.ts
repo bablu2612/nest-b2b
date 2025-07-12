@@ -185,7 +185,7 @@ export class UserService {
      return { user: user, token };
     }else{
     //  const { password: _password, ...userWithoutPassword } = user.toObject();
-     return { user: user };
+     return { user: user ,massage: "Account is not varified yet"};
     }
    
   }
