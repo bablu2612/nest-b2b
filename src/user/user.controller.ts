@@ -75,8 +75,8 @@ export class UserController {
   // }
 
   @Post('login')
-  async login(@Body() body: LoginDto) {
-    return this.userService.login(body);
+  async login(@Body() body: LoginDto,@Res() res:Response) {
+    return this.userService.login(body, res);
   }
 
   @Post('create-payment-intent')

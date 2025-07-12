@@ -143,7 +143,7 @@ export class UserService {
     return user;
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto,res) {
     const { email, password } = dto;
     const [user] = await this.userModel.aggregate([
       {$match:{email}},
@@ -162,14 +162,14 @@ export class UserService {
            f_name: 1,
             l_name: 1,
             email:1,
-             password:1,
+            password:1,
             status: 1,
-        'paymentData._id':1,
-         'paymentData.paymentMode':1,
-        
+           'paymentData._id':1,
+           'paymentData.paymentMode':1
         }
        }
     ]);
+  
     // const user = await this.userModel.findOne({ email });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -180,12 +180,10 @@ export class UserService {
 
     delete user.password
     if(user.status === 'approved'){
-    //  const { password: _, ...userWithoutPassword } = user.toObject();
-
-     return { user: user, token };
+      return res.status(HttpStatus.OK).send( { user: user ,token,massage: "Login successfully"})
     }else{
-    //  const { password: _password, ...userWithoutPassword } = user.toObject();
-     return { user: user ,massage: "Account is not varified yet"};
+    
+    return res.status(HttpStatus.OK).send( { user: user ,massage: "Account is not varified yet"})
     }
    
   }
