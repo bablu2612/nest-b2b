@@ -44,7 +44,7 @@ export class UserService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await this.userModel.create({ ...dto, status : (paymentMode === "bank transfer" && !paymentId)  ? "pending" :"approved", password: hashedPassword });
+    const user = await this.userModel.create({ ...dto, password: hashedPassword });
       
     await this.companyModel.create({ ...companyInfo, user_id: user._id });
 
@@ -58,8 +58,9 @@ export class UserService {
       paymentMode: paymentMode
     });
     const { password: _, ...userWithoutPassword } = user.toObject(); 
-    const token = this.jwtService.sign({ id: user._id, email: user.email });
-    return { message: 'User created successfully', token, user: userWithoutPassword };
+    //const token = this.jwtService.sign({ id: user._id, email: user.email });
+
+    return { message: 'User created successfully', user: userWithoutPassword ,paymentMode: paymentMode};
   }
 
   async getAllUsers() {
@@ -144,14 +145,49 @@ export class UserService {
 
   async login(dto: LoginDto) {
     const { email, password } = dto;
-    const user = await this.userModel.findOne({ email });
+    const [user] = await this.userModel.aggregate([
+      {$match:{email}},
+      {
+        $lookup:{
+          from:'payments',
+          localField:'_id',
+          foreignField:'user_id',
+          as:'paymentData'
+        }
+       },{
+        $unwind:'$paymentData'
+       },
+       {
+        $project:{
+           f_name: 1,
+            l_name: 1,
+            email:1,
+             password:1,
+            status: 1,
+        'paymentData._id':1,
+         'paymentData.paymentMode':1,
+        
+        }
+       }
+    ]);
+    // const user = await this.userModel.findOne({ email });
+
     if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new BadRequestException('Invalid credentials');
     }
 
     const token = this.jwtService.sign({ id: user._id, email: user.email });
-    const { password: _, ...userWithoutPassword } = user.toObject();
-    return { user: userWithoutPassword, token };
+
+    delete user.password
+    if(user.status === 'approved'){
+    //  const { password: _, ...userWithoutPassword } = user.toObject();
+
+     return { user: user, token };
+    }else{
+    //  const { password: _password, ...userWithoutPassword } = user.toObject();
+     return { user: user };
+    }
+   
   }
 
   async createPaymentIntent(body: {
