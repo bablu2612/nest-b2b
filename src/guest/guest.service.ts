@@ -8,10 +8,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Guest, GuestDocument } from 'src/schemas/guest.schema';
 import { Address, AddressDocument } from 'src/schemas/address.schema';
+import { Report, ReportDocument } from 'src/schemas/report.schema';
 @Injectable()
 export class GuestService {
    constructor(
       @InjectModel(Guest.name) private guestModel: Model<GuestDocument>,
+      @InjectModel(Report.name) private reportModel: Model<ReportDocument>,
       @InjectModel(Address.name) private addressModel: Model<AddressDocument>,
      
     ) {}
@@ -55,19 +57,26 @@ export class GuestService {
           document_number,
           telephone,
           email,
-          check_in,
-          check_out,
-          message,
-          images: fileData,
+          // check_in,
+          // check_out,
+          // message,
+          // images: fileData,
           user_id:new Types.ObjectId(user_id)
       }
       
       
       const guestData=await this.guestModel.create(data)
+      const reportData={
+         check_in,
+          check_out,
+          message,
+          images: fileData,
+          guest_id: guestData._id
+      }
       const addressData={
         ...addressInfo,guest_id:guestData._id
       }
-      
+      await this.reportModel.create(reportData)
       await this.addressModel.create(addressData)
       // return {message:"Guest ragister successfully"}
       return res.status(HttpStatus.CREATED).send({message:"Guest ragister successfully"})
@@ -86,6 +95,14 @@ export class GuestService {
           localField: '_id',
           foreignField: 'guest_id',
           as: 'addressData',
+        },
+      },
+      {
+        $lookup: {
+          from: 'reports',
+          localField: '_id',
+          foreignField: 'guest_id',
+          as: 'reportData',
         },
       },
       {
@@ -198,6 +215,14 @@ export class GuestService {
       },
       {
         $unwind:'$addressData'
+      },
+       {
+        $lookup: {
+          from: 'reports',
+          localField: '_id',
+          foreignField: 'guest_id',
+          as: 'reportData',
+        },
       },
       {
         $lookup: {

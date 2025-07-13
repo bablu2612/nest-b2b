@@ -5,12 +5,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Guest, GuestSchema } from 'src/schemas/guest.schema';
 import { Address, AddressSchema } from 'src/schemas/address.schema';
 import { JwtModule } from '@nestjs/jwt';
+import { Report, ReportSchema } from 'src/schemas/report.schema';
 
 @Module({
   imports: [
       MongooseModule.forFeature([
         { name: Guest.name, schema: GuestSchema },
-        { name: Address.name, schema: AddressSchema }
+        { name: Address.name, schema: AddressSchema },
+        { name: Report.name, schema: ReportSchema }
        
       ]),
       JwtModule.register({
