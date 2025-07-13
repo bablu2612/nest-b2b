@@ -35,12 +35,14 @@ export class UserService {
     private jwtService: JwtService,
   ) {}
 
-  async createUser(dto: CreateUserDto) {
+  async createUser(dto: CreateUserDto,res) {
     const { email, password, amount, currency = 'chf', paymentMode,paymentId, ...companyInfo } = dto;
-
-    const userExists = await this.userModel.findOne({ email });
+    try{
+       const userExists = await this.userModel.findOne({ email });
     if (userExists) {
-      throw new BadRequestException('User already exists');
+      //throw new BadRequestException('User already exists');
+      return res.status(HttpStatus.BAD_REQUEST).send({message:"User already exists"})
+
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -60,11 +62,18 @@ export class UserService {
     const { password: _, ...userWithoutPassword } = user.toObject(); 
     //const token = this.jwtService.sign({ id: user._id, email: user.email });
 
-    return { message: 'User created successfully', user: userWithoutPassword ,paymentMode: paymentMode};
+    // return { message: 'User created successfully', user: userWithoutPassword ,paymentMode: paymentMode};
+     return res.status(HttpStatus.CREATED).send({message: 'User created successfully', user: userWithoutPassword ,paymentMode: paymentMode})
+
+    }catch(err){
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({message:err.message})
+    }
+   
   }
 
-  async getAllUsers() {
-    return this.userModel.aggregate([
+  async getAllUsers(res) {
+    try{
+const users= this.userModel.aggregate([
       {
         $lookup: {
           from: 'companies',
@@ -83,6 +92,11 @@ export class UserService {
       },
       { $project: { password: 0 } },
     ]);
+      return res.status(HttpStatus.OK).send({users})
+    }catch(err){
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({message:err.message})
+    }
+    
   }
 
   async getUser(id) {

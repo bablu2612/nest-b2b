@@ -24,6 +24,9 @@ export class Company {
   city: string;
 
   @Prop()
+  country: string;
+
+  @Prop()
   stars: number;
 
   @Prop()

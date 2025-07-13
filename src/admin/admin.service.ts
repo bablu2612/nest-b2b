@@ -118,17 +118,7 @@ export class AdminService {
             }
        
 
-           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,
-            limit,
-            this.guestModel,
-            addressLookup,
-            reportsLookup,
-            userLookup,
-            unwindUserData
-            )
-        //    data.map((user)=>{
-        //     return delete user.password 
-        //    })
+           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit, this.guestModel, addressLookup,reportsLookup,userLookup, unwindUserData)
             return res.status(HttpStatus.OK).send({data,totalCount,totalPages,page,limit})
          }catch(err:any){
             throw new InternalServerErrorException(err.message);
@@ -136,6 +126,49 @@ export class AdminService {
       
      }
      
+     async getAllReports(req,res){
+        try{
+            const {page = "1",limit="10",sorting} = req.query
+           
+            const guestLookup = {
+                $lookup: {
+                    from: 'guests',
+                    localField: 'guest_id',
+                    foreignField: '_id',
+                    as: 'guestData',
+                },
+            }
+             const unwindGuestData={
+                $unwind:'$guestData'
+            }
+            const addressLookup = {
+                $lookup: {
+                    from: 'addresses',
+                    localField: 'guestData._id',
+                    foreignField: 'guest_id',
+                    as: 'addressData',
+                },
+            }
+           const userLookup =  {
+                $lookup: {
+                    from: 'users',
+                    localField: 'guestData.user_id',
+                    foreignField: '_id',
+                    as: 'userData',
+                },
+            }
+            const unwindUserData={
+                $unwind:'$userData'
+            }
+       
+
+           //const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit, this.reportModel, addressLookup,reportsLookup,userLookup, unwindUserData)
+           // return res.status(HttpStatus.OK).send({data,totalCount,totalPages,page,limit})
+         }catch(err:any){
+            throw new InternalServerErrorException(err.message);
+        }
+      
+     }
      
 
  async getAllDataWithPagination(page,limit,model,lookup,paymentLookup,userLookup,unwindUser){

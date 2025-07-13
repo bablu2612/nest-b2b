@@ -26,14 +26,14 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('sign-up')
-  async createUser(@Body() body: CreateUserDto) {
-    return this.userService.createUser(body);
+  async createUser(@Body() body: CreateUserDto,@Res() res:Response) {
+    return this.userService.createUser(body,res);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('getAll')
-  async getAllUsers() {
-    return this.userService.getAllUsers();
+  async getAllUsers(@Res() res:Response) {
+    return this.userService.getAllUsers(res);
   }
 
   @UseGuards(JwtAuthGuard)

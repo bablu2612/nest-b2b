@@ -28,4 +28,11 @@ export class AdminController {
       async getAllGuests(@Req() req:Request,@Res() res:Response) {
         return this.adminService.getAllGuests(req,res);
       }
+
+    @UseGuards(JwtAuthGuard)
+      @Get('get-reports')
+      async getAllReports(@Req() req:Request,@Res() res:Response) {
+        return this.adminService.getAllReports(req,res);
+      }
+    
 }
