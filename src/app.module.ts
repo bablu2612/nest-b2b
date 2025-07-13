@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module'; // ✅ If you have it
 import { GuestModule } from './guest/guest.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -32,7 +33,8 @@ import { GuestModule } from './guest/guest.module';
 
     UserModule,
     AuthModule,
-    GuestModule, // ✅ if you're managing auth separately
+    GuestModule,
+    AdminModule, // ✅ if you're managing auth separately
   ],
   controllers: [AppController],
   providers: [AppService],

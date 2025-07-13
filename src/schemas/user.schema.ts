@@ -8,6 +8,7 @@ export class User {
   @Prop({ unique: true }) email: string;
   @Prop() password: string;
   @Prop({ default: "pending" }) status: string;
+  @Prop({ default: "user" }) role: string;
 }
 
 export type UserDocument = User & Document;
