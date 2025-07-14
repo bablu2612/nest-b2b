@@ -8,7 +8,9 @@ export class AdminController {
     constructor(private readonly adminService:AdminService){}
      @UseGuards(JwtAuthGuard)
       @Post('update-user-status')
-      async updateUserStatus(@Body() body: UpdateStatusDto,@Res() res:Response) {
+      async updateUserStatus(@Body() body: UpdateStatusDto,@Req() req: Request,@Res() res:Response) {
+       
+            // const { email } = req.user as any;
         return this.adminService.updateUserStatus(body,res);
       }
       @UseGuards(JwtAuthGuard)

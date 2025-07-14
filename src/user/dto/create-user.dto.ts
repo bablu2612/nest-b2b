@@ -37,7 +37,7 @@ export class CreateUserDto {
   @IsOptional() room_no?: string;
   @IsOptional() zip_code?: string;
   @IsOptional() city?: string;
-   @IsOptional() country?: string;
+  @IsOptional() country?: string;
   @IsOptional() stars?: number;
   @IsOptional() is_part_of_association?: boolean;
 }
