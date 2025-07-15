@@ -51,13 +51,7 @@ export class GuestService {
       if (!fs.existsSync(folderPath)) {
         await mkdir(path.dirname(folderPath), { recursive: true });
       }
-      const userExists = await this.guestModel.findOne({ email });
-      if (userExists) {
-        // throw new BadRequestException('Guest already exists');
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .send({ message: 'Guest already exists' });
-      }
+     
       const fileData: string[] = [];
 
       for (const file of files) {
@@ -86,8 +80,16 @@ export class GuestService {
         // images: fileData,
         user_id: new Types.ObjectId(user_id),
       };
+      let guestData:any
+      const userExists = await this.guestModel.findOne({ email });
+      if (userExists) {
+        // throw new BadRequestException('Guest already exists');
+       guestData=userExists
+      }else{
+        guestData = await this.guestModel.create(data);
+      }
 
-      const guestData = await this.guestModel.create(data);
+      
       const reportData = {
         check_in,
         check_out,
@@ -95,12 +97,16 @@ export class GuestService {
         images: fileData,
         guest_id: guestData._id,
       };
-      const addressData = {
+     
+      await this.reportModel.create(reportData);
+      if(!userExists){
+         const addressData = {
         ...addressInfo,
         guest_id: guestData._id,
       };
-      await this.reportModel.create(reportData);
       await this.addressModel.create(addressData);
+      }
+      
       // return {message:"Guest ragister successfully"}
       return res
         .status(HttpStatus.CREATED)
