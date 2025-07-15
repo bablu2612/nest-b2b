@@ -13,7 +13,7 @@ export class GuestController {
     @Post('ragister')
     
     @UseInterceptors(FilesInterceptor('files', 5, {
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    limits: { fileSize: 50 * 1024 * 1024 }, // 5MB
     }))
     async createGuest( @UploadedFiles() files: Express.Multer.File[], @Body() body: any,@Req() req: Request,@Res() res:Response)  {
 
