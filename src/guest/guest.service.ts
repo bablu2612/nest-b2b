@@ -153,7 +153,8 @@ export class GuestService {
             if (key && value) {   
               //  match all data      
                 matchConditions.push({
-                  [key]: value.toString().toLowerCase().trim()
+                  // [key]: value.toString()
+                    [key]: { $regex: `^${value}$`, $options: 'i' } // Case-insensitive exact match
                 });
               //match company name
               if(key === "company_name"){
