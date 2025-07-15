@@ -141,9 +141,10 @@ export class GuestService {
         let anyThreePipeline:any []=[]
         let matchConditions: { [key: string]: any }[] = [];
         let anyThreeMatchConditions: { [key: string]: any }[] = [];
-        let comanyMatch={};
         let typeAllMatch:any;
-        let typeComapnyMatch:any;
+        let comanyMatch: any = undefined;
+        let typeComapnyMatch: any = undefined;
+
         let typeThreeMatch:any;
         const minMatch = 3;
 
@@ -157,7 +158,7 @@ export class GuestService {
                     [key]: { $regex: `^${value}$`, $options: 'i' } // Case-insensitive exact match
                 });
               //match company name
-              if(key === "company_name"){
+              if(key === "company_name" && value){
                 comanyMatch={$match: { 'company_name': value.toString().toLowerCase().trim() }}
               
               }
@@ -180,7 +181,9 @@ export class GuestService {
         }
 
         typeAllMatch=await this.getSearchGuest(pipeline);
+        if(comanyMatch){
         typeComapnyMatch = await this.getSearchGuest([comanyMatch])
+        }
         if (anyThreeMatchConditions.length > 0) {
           anyThreePipeline.push({
             $match: {
@@ -196,7 +199,7 @@ export class GuestService {
           });
         }
         typeThreeMatch = await this.getSearchGuest(anyThreePipeline)
-        return {accurateMatch: typeAllMatch, sameCompanyData: typeComapnyMatch, partisalMatch: typeThreeMatch};
+        return {accurateMatch: typeAllMatch, sameCompanyData: typeComapnyMatch !== undefined ? typeComapnyMatch : [], partisalMatch: typeThreeMatch};
 
     }catch(err){
        throw new InternalServerErrorException(err.message);
@@ -237,7 +240,6 @@ export class GuestService {
         $unwind:'$userData'
       },
       ...pipeline
-    
     
     ]);
     return guestData

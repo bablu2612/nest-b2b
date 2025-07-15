@@ -22,10 +22,13 @@ export class AdminService {
         private jwtService: JwtService
     ) {
          this.transporter = nodemailer.createTransport({
-            service: 'gmail', // or use `host`, `port`, `auth` for custom SMTP
+            // service: 'gmail', // or use `host`, `port`, `auth` for custom SMTP
+            host:'mail.infomaniak.com',
+            port:465,
+
             auth: {
-                user: 'rupadev82@gmail.com',
-                pass: 'ivco inug iyez omhb',
+                 user: 'app@b2binfo.ch',
+                pass: '9g319#/FcALe-S_',
             },
         });
       }
@@ -43,10 +46,8 @@ export class AdminService {
                     email:data.email
                 })
           
-            const subject="Regarding mail approve"
-            console.log("data",data)
+            const subject="Regarding account approve"
             await this.sendMail(data.email,subject,templateData)
-            // return template(context);
              return res.status(HttpStatus.OK).send({ message: "User updated successfully" })
             }else{
             return res.status(HttpStatus.OK).send({ message: "User not updated" })
@@ -62,7 +63,41 @@ export class AdminService {
         const { status, id } = body;
         try{
             const data = await this.updateStatus(status,id,this.reportModel);
-            return res.status(HttpStatus.OK).send({ message: "Report updated successfully" });
+          
+            const [guestData] = await this.guestModel.aggregate([
+                {
+                    $match:{
+                        _id:data.guest_id
+                    }
+                },
+                { 
+                    $lookup: {
+                    from: 'users',
+                    localField: 'user_id',
+                    foreignField: '_id',
+                    as: 'userData',
+                    },
+                },
+                {
+                     $unwind:'$userData'
+                }
+            ]);
+        
+            const templatePath = status === "approved" ? path.join(__dirname, '..','..','src','mail','templates','approveReportTemplate.hbs'): path.join(__dirname,'..','..','src', 'mail','templates','disApproveReportTemplate.hbs');
+            const source = fs.readFileSync(templatePath, 'utf-8');
+            const template = handlebars.compile(source);
+            if(data && guestData){
+            const templateData = template({
+                    name: guestData?.userData.f_name + " " + guestData.userData.l_name,
+                 
+                })
+          
+            const subject="Regarding report approve"
+            await this.sendMail(guestData.userData.email,subject,templateData)
+               return res.status(HttpStatus.OK).send({ message: "Report updated successfully" });
+            }else{
+              return res.status(HttpStatus.OK).send({ message: "Report not updated" });
+            }
         }catch(err:any){
             throw new InternalServerErrorException(err.message);
         }
@@ -84,7 +119,7 @@ export class AdminService {
      }
 
  async sendMail( to: string, subject: string,htmlContent:any): Promise<void>{
-      const from="rupadev82@gmail.com"
+    const from = "app@b2binfo.ch"
     const mailOptions: nodemailer.SendMailOptions = {
       from,
       to,
