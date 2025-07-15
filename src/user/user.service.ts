@@ -225,18 +225,58 @@ const users= this.userModel.aggregate([
 
   async checkEmailExist(body: CheckUserExistsDto,res) {
     const { email } = body;
-try{
-   const userExists = await this.userModel.findOne({ email });
-    if (userExists) {
-     
-      return res.status(HttpStatus.BAD_REQUEST).send({message:'User already exists'})
-    }else{
-      return res.status(HttpStatus.OK).send({user:userExists})
-    }
-}catch(error:any){
-throw new InternalServerErrorException(error.message);
-}
+  try{
+    const userExists = await this.userModel.findOne({ email });
+      if (userExists) {
+      
+        return res.status(HttpStatus.BAD_REQUEST).send({message:'User already exists'})
+      }else{
+        return res.status(HttpStatus.OK).send({user:userExists})
+      }
+  }catch(error:any){
+  throw new InternalServerErrorException(error.message);
+  }
  }
+
+  async updatePassword(email,body,res) {
+    const { password,new_password } = body;
+    try{
+      const user = await this.userModel.findOne({ email });
+        if (user) {
+          const matchPassword = await bcrypt.compare(password, user.password)
+          if(matchPassword){
+            const hashedPassword = await bcrypt.hash(new_password, 10);
+            await this.userModel.findOneAndUpdate({ email },{ password: hashedPassword },{ new: true });
+            return res.status(HttpStatus.OK).send({message:'User updated successfully'})
+          }else{
+             return res.status(HttpStatus.BAD_REQUEST).send({message:'Password does not match to old password'})
+          }
+        }else{
+          return res.status(HttpStatus.BAD_REQUEST).send({message:'User does not exists'})
+        }
+    }catch(error:any){
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({message:error.message})
+    }
+  }
+
+   async resetPassword(body,res) {
+    const { email } = body;
+    try{
+      // const userExists = await this.userModel.findOne({ email });
+      //   if (userExists) {
+      //     const hashedPassword = await bcrypt.hash(password, 10);
+      //     await this.userModel.findOneAndUpdate({ email },{ password: hashedPassword },{ new: true });
+      //     return res.status(HttpStatus.OK).send({message:'User updated successfully'})
+      //   }else{
+      //     return res.status(HttpStatus.BAD_REQUEST).send({message:'User does not exists'})
+      //   }
+    }catch(error:any){
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({message:error.message})
+    }
+  }
+
+ 
+ 
 }
 
 

@@ -83,4 +83,16 @@ export class UserController {
   async createPaymentIntent(@Body() body: { amount: number; currency?: string; customer_email: string }) {
     return this.userService.createPaymentIntent(body);
   }
+
+    @Post('update-password')
+    async updatePassword(@Req() req: Request,@Body() body: { password: string,new_password: string  },@Res() res:Response) {
+      const { email } = req.user as any;
+      return this.userService.updatePassword(email,body,res);
+    }
+     @Post('reset-password')
+    async resetPassword( body: { email: string },@Res() res:Response) {
+      
+      return this.userService.resetPassword(body,res);
+    }
+
 }
