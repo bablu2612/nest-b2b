@@ -117,50 +117,58 @@ export class GuestService {
   }
 
   async getAllGuest(user_id: string) {
-    const guestData = await this.guestModel.aggregate([
-      { $match: { user_id: new Types.ObjectId(user_id) } },
+   const guestData = await this.guestModel.aggregate([
+  { $match: { user_id: new Types.ObjectId(user_id) } },
+  {
+    $lookup: {
+      from: 'addresses',
+      localField: '_id',
+      foreignField: 'guest_id',
+      as: 'addressData',
+    },
+  },
+  {
+    $unwind: {
+      path: '$addressData',
+      preserveNullAndEmptyArrays: true
+    }
+  },
+  {
+    $lookup: {
+      from: 'reports',
+      localField: '_id',
+      foreignField: 'guest_id',
+      as: 'reportData',
+    },
+  },
+  {
+    $unwind: {
+      path: '$reportData',
+      preserveNullAndEmptyArrays: true
+    }
+  },
+  {
+    $addFields: {
+      reportData: { $cond: [{ $ifNull: ['$reportData', false] }, ['$reportData'], []] }
+    }
+  },
+  {
+    $lookup: {
+      from: 'users',
+      localField: 'user_id',
+      foreignField: '_id',
+      as: 'userData',
+    },
+  },
+  {
+    $unwind: {
+      path: '$userData',
+      preserveNullAndEmptyArrays: true
+    }
+  },
+]);
 
-      {
-        $lookup: {
-          from: 'addresses',
-          localField: '_id',
-          foreignField: 'guest_id',
-          as: 'addressData',
-        },
-      },
-      {
-        $lookup: {
-          from: 'reports',
-          localField: '_id',
-          foreignField: 'guest_id',
-          as: 'reportData',
-        },
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'user_id',
-          foreignField: '_id',
-          as: 'userData',
-        },
-      },
-      {
-        $unwind: '$userData',
-      },
-
-      //  {
-      // $project: {
-      //    guest: {
-      //       $filter: {
-      //          input: "$guest",
-      //          as: "g",
-      //          cond: { $eq: [ "$$g.user_id",new Types.ObjectId(user_id)  ] }
-      //       }
-      //    }
-      // }
-      //  }
-    ]);
-    return { guest: guestData };
+    return { guests: guestData };
   }
 
   async searchGuest(req) {
