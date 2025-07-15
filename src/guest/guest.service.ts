@@ -168,7 +168,7 @@ export class GuestService {
   },
 ]);
 
-    return { guests: guestData };
+    return { guest: guestData };
   }
 
   async searchGuest(req) {
