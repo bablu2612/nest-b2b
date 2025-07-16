@@ -197,9 +197,14 @@ export class GuestService {
             });
             //match company name
             if (key === 'company_name' && value) {
-              comanyMatch = {
-                $match: { company_name: value.toString().toLowerCase().trim() },
-              };
+            comanyMatch = {
+  $match: {
+    company_name: {
+      $regex: `^${value.toString().trim()}$`,
+      $options: 'i', // makes it case-insensitive
+    },
+  },
+};
             }
             //match any three data
             anyThreeMatchConditions.push({

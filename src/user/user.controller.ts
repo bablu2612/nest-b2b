@@ -98,10 +98,10 @@ export class UserController {
       async verifyToken( @Req() req:Request,@Res() res:Response) {
       return this.userService.verifyToken(req,res);
     }
-    //  @Post('reset-password')
-    // async resetPassword( body: { email: string },@Res() res:Response) {
+     @Post('reset-password')
+    async resetPassword( body: { token: string,password: string },@Res() res:Response) {
       
-    //   return this.userService.resetPassword(body,res);
-    // }
+      return this.userService.resetPassword(body,res);
+    }
 
 }

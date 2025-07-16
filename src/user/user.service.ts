@@ -267,7 +267,7 @@ const users= this.userModel.aggregate([
           if(matchPassword){
             const hashedPassword = await bcrypt.hash(new_password, 10);
             await this.userModel.findOneAndUpdate({ email },{ password: hashedPassword },{ new: true });
-            return res.status(HttpStatus.OK).send({message:'User updated successfully'})
+            return res.status(HttpStatus.OK).send({message:'Password updated successfully'})
           }else{
              return res.status(HttpStatus.BAD_REQUEST).send({message:'Password does not match to old password'})
           }
@@ -335,7 +335,7 @@ const users= this.userModel.aggregate([
          if(user && Date.now() > user.resetTime.getTime()){
           return res.status(HttpStatus.BAD_REQUEST).send({message:"token expired"})
          }
-        await this.userModel.findOneAndUpdate({email},{resetStatus:true})
+        // await this.userModel.findOneAndUpdate({email},{resetStatus:true})
 
         //        user.resetPasswordToken = null;
         // user.resetPasswordExpires = null;
@@ -346,6 +346,48 @@ const users= this.userModel.aggregate([
 
         }else{
           return res.status(HttpStatus.BAD_REQUEST).send({message:"Invalid or expired token"})
+        }
+    }catch(error:any){
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({message:error.message})
+    }
+  }
+
+
+   async resetPassword(body,res) {
+    const { token,password } = body;
+    try{
+       
+     if(!token){
+          return res.status(HttpStatus.BAD_REQUEST).send({message:"Token does not exist"})
+        }
+       
+        const verifyToken = this.jwtService.verify(token);
+
+        if(verifyToken){
+          const detail=this.jwtService.decode(token);
+          console.log("detail",detail)
+          const {email}=detail;
+         const user = await this.userModel.findOne({email})
+         const currentDate=  Date.now()
+         if(user?.resetToken !== token ){
+           return res.status(HttpStatus.BAD_REQUEST).send({message:"Invalid or expired token"})
+          
+         }
+         if(user && Date.now() > user.resetTime.getTime()){
+          return res.status(HttpStatus.BAD_REQUEST).send({message:"token expired"})
+         }
+          const hashedPassword = await bcrypt.hash(password, 10);
+
+
+          await this.userModel.findOneAndUpdate({email},{password:hashedPassword,resetToken:null,resetTime:null})
+          
+        //        user.resetPasswordToken = null;
+        // user.resetPasswordExpires = null;
+        //       }
+
+      
+        return res.status(HttpStatus.OK).send({message: "Password updated successfully"})
+
         }
     }catch(error:any){
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({message:error.message})
