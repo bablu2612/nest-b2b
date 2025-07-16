@@ -12,7 +12,7 @@ export class GuestController {
     @UseGuards(JwtAuthGuard)
     @Post('ragister')
     
-    @UseInterceptors(FilesInterceptor('files', 5, {
+    @UseInterceptors(FilesInterceptor('files', 20, {
     limits: { fileSize: 50 * 1024 * 1024 }, // 5MB
     }))
     async createGuest( @UploadedFiles() files: Express.Multer.File[], @Body() body: any,@Req() req: Request,@Res() res:Response)  {
@@ -44,6 +44,8 @@ export class GuestController {
        async getGuestById(@Req() req: Request )  {
        return this.guestService.getGuestById(req);
     }
+
+    
 
 
 }

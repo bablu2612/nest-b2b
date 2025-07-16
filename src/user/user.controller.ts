@@ -89,10 +89,19 @@ export class UserController {
       const { email } = req.user as any;
       return this.userService.updatePassword(email,body,res);
     }
-     @Post('reset-password')
-    async resetPassword( body: { email: string },@Res() res:Response) {
-      
-      return this.userService.resetPassword(body,res);
+     @Post('forgot-password')
+      async forgotPassword( body: { email: string },@Res() res:Response) {
+      return this.userService.forgotPassword(body,res);
     }
+
+    @Get('verify-token')
+      async verifyToken( @Req() req:Request,@Res() res:Response) {
+      return this.userService.verifyToken(req,res);
+    }
+    //  @Post('reset-password')
+    // async resetPassword( body: { email: string },@Res() res:Response) {
+      
+    //   return this.userService.resetPassword(body,res);
+    // }
 
 }

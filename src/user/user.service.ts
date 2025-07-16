@@ -11,7 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import Stripe from 'stripe';
 import * as dotenv from 'dotenv';
-
+import * as nodemailer from 'nodemailer';
 import { User, UserDocument } from '../schemas/user.schema';
 import { Company, CompanyDocument } from '../schemas/company.schema';
 import { Payment, PaymentDocument } from '../schemas/payment.schema';
@@ -19,6 +19,10 @@ import { CreateUserDto } from '../user/dto/create-user.dto';
 import { LoginDto } from '../user/dto/login.dto';
 import { UpdateUserDto } from '../user/dto/update-user.dto';
 import { CheckUserExistsDto } from './dto/check-user-exist.dto';
+import { mailService } from 'src/mail/mail.service';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as handlebars from 'handlebars';
 
 dotenv.config();
 
@@ -28,12 +32,28 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 
 @Injectable()
 export class UserService {
+  private transporter: nodemailer.Transporter;
+  
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
+     private readonly mailService: mailService,
+    
     private jwtService: JwtService,
-  ) {}
+  ) {
+     this.transporter = nodemailer.createTransport({
+              // service: 'gmail', // or use `host`, `port`, `auth` for custom SMTP
+              host:'mail.infomaniak.com',
+              port:465,
+  
+              auth: {
+                   user: process.env.FROM_EMAIL,
+                  pass: process.env.FROM_PASS,
+              },
+            })
+  }
+
 
   async createUser(dto: CreateUserDto,res) {
     const { email, password, amount, currency = 'chf', paymentMode,paymentId, ...companyInfo } = dto;
@@ -259,17 +279,74 @@ const users= this.userModel.aggregate([
     }
   }
 
-   async resetPassword(body,res) {
+   async forgotPassword(body,res) {
     const { email } = body;
     try{
-      // const userExists = await this.userModel.findOne({ email });
-      //   if (userExists) {
-      //     const hashedPassword = await bcrypt.hash(password, 10);
-      //     await this.userModel.findOneAndUpdate({ email },{ password: hashedPassword },{ new: true });
-      //     return res.status(HttpStatus.OK).send({message:'User updated successfully'})
-      //   }else{
-      //     return res.status(HttpStatus.BAD_REQUEST).send({message:'User does not exists'})
-      //   }
+       const userExists = await this.userModel.findOne({ email });
+        if (!userExists) {
+          return res.status(HttpStatus.BAD_REQUEST).send({message:'User does not exists'});
+        }
+
+      const resetToken = this.jwtService.sign({ id: userExists._id, email: userExists.email },{ expiresIn: '15m' });
+      await this.userModel.findOneAndUpdate({email},{resetToken,resetTime: new Date(Date.now() + 15 * 60000)})
+      const resetLink = `${process.env.BASE_URL}/reset-password?token=${resetToken}`;
+
+      const templatePath =path.join(__dirname, '..','..','src','mail','templates','resetTemplate.hbs')
+      const source = fs.readFileSync(templatePath, 'utf-8');
+      const template = handlebars.compile(source);
+    
+      const templateData = template({
+              resetLink: resetLink
+          });
+
+        await this.mailService.send({
+          to: email,
+          subject: 'Reset Password',
+          html: templateData,
+        });
+        return res.status(HttpStatus.OK).send({message:"Password reset link sentSuccessfully"})
+
+    }catch(error:any){
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({message:error.message})
+    }
+  }
+
+
+
+   async verifyToken(req,res) {
+    const { token } = req.query;
+    try{
+        if(!token){
+          return res.status(HttpStatus.BAD_REQUEST).send({message:"Token does not exist"})
+        }
+       
+        const verifyToken = this.jwtService.verify(token);
+
+        if(verifyToken){
+          const detail=this.jwtService.decode(token);
+          console.log("detail",detail)
+          const {email}=detail;
+         const user = await this.userModel.findOne({email})
+         const currentDate=  Date.now()
+         if(user?.resetToken !== token ){
+           return res.status(HttpStatus.BAD_REQUEST).send({message:"Invalid or expired token"})
+          
+         }
+         if(user && Date.now() > user.resetTime.getTime()){
+          return res.status(HttpStatus.BAD_REQUEST).send({message:"token expired"})
+         }
+        await this.userModel.findOneAndUpdate({email},{resetStatus:true})
+
+        //        user.resetPasswordToken = null;
+        // user.resetPasswordExpires = null;
+        //       }
+
+      
+        return res.status(HttpStatus.OK).send({message:"token verified successfully"})
+
+        }else{
+          return res.status(HttpStatus.BAD_REQUEST).send({message:"Invalid or expired token"})
+        }
     }catch(error:any){
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({message:error.message})
     }

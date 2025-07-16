@@ -304,6 +304,12 @@ export class GuestService {
             $or: [
               { first_name: { $regex: search.trim(), $options: 'i' } },
               { last_name: { $regex: search.trim(), $options: 'i' } },
+              { company_name: { $regex: search.trim(), $options: 'i' } },
+              { nationality: { $regex: search.trim(), $options: 'i' } },
+              { document_type: { $regex: search.trim(), $options: 'i' } },
+              { document_number: { $regex: search.trim(), $options: 'i' } },
+              { telephone: { $regex: search.trim(), $options: 'i' } },
+              { email: { $regex: search.trim(), $options: 'i' } },
             ],
           },
         },

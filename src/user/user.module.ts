@@ -6,6 +6,7 @@ import { User, UserSchema } from '../schemas/user.schema';
 import { Company, CompanySchema } from '../schemas/company.schema';
 import { Payment, PaymentSchema } from '../schemas/payment.schema';
 import { JwtModule } from '@nestjs/jwt';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { JwtModule } from '@nestjs/jwt';
       secret: process.env.JWT_SECRET || 'fghjghgjhjghdsxzdxzdkhjk', // ✅ Fix is here
       signOptions: { expiresIn: '1d' },
     }),
+    MailModule
   ],
   controllers: [UserController],
   providers: [UserService],
