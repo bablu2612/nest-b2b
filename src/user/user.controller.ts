@@ -20,6 +20,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Request } from 'express';
 import { CheckUserExistsDto } from './dto/check-user-exist.dto';
+import { DeleteUserDto } from './dto/delete-user.dto';
 
 @Controller('user')
 export class UserController {
@@ -61,18 +62,11 @@ export class UserController {
     return this.userService.checkEmailExist(body,res);
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Put('delete')
-  // async deleteUser(@Body() body: DeleteUserDto) {
-  //   return this.userService.deleteUser(body);
-  // }
-
-  // @UseGuards(JwtAuthGuard)
-  // @Get('get-current-user')
-  // async getCurrentUser(@Req() req: Request) {
-  //   const { email } = req.user as any;
-  //   return this.userService.getCurrentUser(email);
-  // }
+  @UseGuards(JwtAuthGuard)
+  @Put('delete')
+  async deleteUser(@Body() body: DeleteUserDto) {
+    return this.userService.deleteUser(body);
+  }
 
   @Post('login')
   async login(@Body() body: LoginDto,@Res() res:Response) {
@@ -84,13 +78,15 @@ export class UserController {
     return this.userService.createPaymentIntent(body);
   }
 
+ @UseGuards(JwtAuthGuard)
     @Post('update-password')
     async updatePassword(@Req() req: Request,@Body() body: { password: string,new_password: string  },@Res() res:Response) {
       const { email } = req.user as any;
       return this.userService.updatePassword(email,body,res);
     }
+
      @Post('forgot-password')
-      async forgotPassword( body: { email: string },@Res() res:Response) {
+      async forgotPassword(@Body() body: { email: string },@Res() res:Response) {
       return this.userService.forgotPassword(body,res);
     }
 
@@ -99,7 +95,7 @@ export class UserController {
       return this.userService.verifyToken(req,res);
     }
      @Post('reset-password')
-    async resetPassword( body: { token: string,password: string },@Res() res:Response) {
+    async resetPassword(@Body() body: { token: string,password: string },@Res() res:Response) {
       
       return this.userService.resetPassword(body,res);
     }

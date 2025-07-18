@@ -23,6 +23,7 @@ import { mailService } from 'src/mail/mail.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as handlebars from 'handlebars';
+import { deleteData } from 'src/common/common';
 
 dotenv.config();
 
@@ -152,13 +153,17 @@ const users= this.userModel.aggregate([
     return { message: 'User updated successfully' };
   }
 
-  async deleteUser(ids: string[]) {
-    const res = await this.userModel.deleteMany({ _id: { $in: ids } });
-    await this.companyModel.deleteMany({ user_id: { $in: ids } });
-    if (res.deletedCount < 1) {
-      throw new BadRequestException('User not deleted');
+  async deleteUser(ids) {
+    try{
+        const res = await deleteData(ids,this.userModel)
+        await this.companyModel.deleteMany({ user_id: { $in: ids } });
+        if (!res) {
+        throw new BadRequestException('User not deleted');
+        }
+        return { message: 'User deleted successfully' };
+    }catch(err:any){
+          throw new InternalServerErrorException(err.message);
     }
-    return { message: 'User deleted successfully' };
   }
 
   async getCurrentUser(email: string) {
@@ -281,16 +286,18 @@ const users= this.userModel.aggregate([
 
    async forgotPassword(body,res) {
     const { email } = body;
+
     try{
        const userExists = await this.userModel.findOne({ email });
         if (!userExists) {
           return res.status(HttpStatus.BAD_REQUEST).send({message:'User does not exists'});
         }
 
-      const resetToken = this.jwtService.sign({ id: userExists._id, email: userExists.email },{ expiresIn: '15m' });
-      await this.userModel.findOneAndUpdate({email},{resetToken,resetTime: new Date(Date.now() + 15 * 60000)})
-      const resetLink = `${process.env.BASE_URL}/reset-password?token=${resetToken}`;
-
+      const resetToken = this.jwtService.sign({ id: userExists._id, email: userExists.email },{ expiresIn: '24h' });
+      // await this.userModel.findOneAndUpdate({email},{resetToken,resetTime: new Date(Date.now() + 15 * 60000)}). //15 min
+      await this.userModel.findOneAndUpdate({email},{resetToken,resetTime: new Date(Date.now() + 24 * 60 * 60 * 1000)})  //24 h
+      const resetLink = `${process.env.BASE_URL}/api/user/verify-token?token=${resetToken}`;
+console.log("resetLink",resetLink)
       const templatePath =path.join(__dirname, '..','..','src','mail','templates','resetTemplate.hbs')
       const source = fs.readFileSync(templatePath, 'utf-8');
       const template = handlebars.compile(source);
@@ -304,7 +311,7 @@ const users= this.userModel.aggregate([
           subject: 'Reset Password',
           html: templateData,
         });
-        return res.status(HttpStatus.OK).send({message:"Password reset link sentSuccessfully"})
+        return res.status(HttpStatus.OK).send({message:"Password reset link sent successfully"})
 
     }catch(error:any){
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({message:error.message})
@@ -317,7 +324,7 @@ const users= this.userModel.aggregate([
     const { token } = req.query;
     try{
         if(!token){
-          return res.status(HttpStatus.BAD_REQUEST).send({message:"Token does not exist"})
+          return res.status(HttpStatus.BAD_REQUEST).send({message:"Token does not exist"});
         }
        
         const verifyToken = this.jwtService.verify(token);
@@ -357,10 +364,12 @@ const users= this.userModel.aggregate([
     const { token,password } = body;
     try{
        
-     if(!token){
+        if(!token){
           return res.status(HttpStatus.BAD_REQUEST).send({message:"Token does not exist"})
         }
-       
+        if(!password){
+          return res.status(HttpStatus.BAD_REQUEST).send({message:"Password does not exist"})
+        }
         const verifyToken = this.jwtService.verify(token);
 
         if(verifyToken){
@@ -380,12 +389,7 @@ const users= this.userModel.aggregate([
 
 
           await this.userModel.findOneAndUpdate({email},{password:hashedPassword,resetToken:null,resetTime:null})
-          
-        //        user.resetPasswordToken = null;
-        // user.resetPasswordExpires = null;
-        //       }
 
-      
         return res.status(HttpStatus.OK).send({message: "Password updated successfully"})
 
         }

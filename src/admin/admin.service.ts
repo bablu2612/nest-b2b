@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -10,6 +10,8 @@ import * as nodemailer from 'nodemailer';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as handlebars from 'handlebars';
+import { deleteData } from 'src/common/common';
+import { Company, CompanyDocument } from 'src/schemas/company.schema';
 
 @Injectable()
 export class AdminService {
@@ -19,6 +21,7 @@ export class AdminService {
         @InjectModel(Report.name) private reportModel: Model<ReportDocument>,
         @InjectModel(Guest.name) private guestModel: Model<GuestDocument>,
         @InjectModel(Address.name) private addressModel: Model<AddressDocument>,
+        @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
         private jwtService: JwtService
     ) {
          this.transporter = nodemailer.createTransport({
@@ -191,9 +194,7 @@ export class AdminService {
                     as: 'userData',
                 },
             }
-            const unwindUserData={
-                $unwind:'$userData'
-            }
+            const unwindUserData=false
        
 
            const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit, this.guestModel, addressLookup,reportsLookup,userLookup, unwindUserData,false,false)
@@ -306,6 +307,43 @@ export class AdminService {
         }
     }
     
+    async deleteUser(ids) {
+        try{
+            const res = await deleteData(ids,this.userModel)
+            await this.companyModel.deleteMany({ user_id: { $in: ids } });
+            if (!res) {
+            throw new BadRequestException('User not deleted');
+            }
+            return { message: 'User deleted successfully' };
+        }catch(err:any){
+             throw new InternalServerErrorException(err.message);
+        }
+    }
+    
+    async deleteGuest(ids) {
+        try{
+            const res = await deleteData(ids,this.guestModel);
+            if (!res) {
+            throw new BadRequestException('Guest not deleted');
+            }
+            return { message: 'Guest deleted successfully' };
+        }catch(err:any){
+             throw new InternalServerErrorException(err.message);
+        }
+    }
 
+    async deleteReport(ids) {
+        try{
+            const res = await deleteData(ids,this.reportModel);
+            if (!res) {
+            throw new BadRequestException('Report not deleted');
+            }
+            return { message: 'Report deleted successfully' };
+        }catch(err:any){
+             throw new InternalServerErrorException(err.message);
+        }
+    }
+
+    
     
 }
