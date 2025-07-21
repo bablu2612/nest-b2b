@@ -86,8 +86,8 @@ export class UserController {
     }
 
      @Post('forgot-password')
-      async forgotPassword(@Body() body: { email: string },@Res() res:Response) {
-      return this.userService.forgotPassword(body,res);
+      async forgotPassword(@Req() req: Request,@Body() body: { email: string },@Res() res:Response) {
+      return this.userService.forgotPassword(req.headers.origin,body,res);
     }
 
     @Get('verify-token')
