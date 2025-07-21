@@ -1,7 +1,7 @@
 import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Address, AddressDocument } from 'src/schemas/address.schema';
 import { Guest, GuestDocument } from 'src/schemas/guest.schema';
 import { Report, ReportDocument } from 'src/schemas/report.schema';
@@ -12,6 +12,11 @@ import * as path from 'path';
 import * as handlebars from 'handlebars';
 import { deleteData } from 'src/common/common';
 import { Company, CompanyDocument } from 'src/schemas/company.schema';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { Payment, PaymentDocument } from 'src/schemas/payment.schema';
+import * as bcrypt from 'bcrypt';
+
+import { writeFile, mkdir } from 'fs/promises';
 
 @Injectable()
 export class AdminService {
@@ -22,6 +27,7 @@ export class AdminService {
         @InjectModel(Guest.name) private guestModel: Model<GuestDocument>,
         @InjectModel(Address.name) private addressModel: Model<AddressDocument>,
         @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
+        @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
         private jwtService: JwtService
     ) {
          this.transporter = nodemailer.createTransport({
@@ -109,7 +115,6 @@ export class AdminService {
      async updateStatus(status,id,model){
         try{
             const updateData= await model.findByIdAndUpdate(id,{status},{new:true})
-            console.log("updateData",updateData)
             if(updateData){
                 return updateData
             }else{
@@ -345,5 +350,191 @@ export class AdminService {
     }
 
     
+    async createUser(dto: CreateUserDto,res) {
+        const { email, password, amount, currency = 'chf', paymentMode=null,paymentId=null, ...companyInfo } = dto;
+        try{
+           const userExists = await this.userModel.findOne({ email });
+        if (userExists) {
+          //throw new BadRequestException('User already exists');
+          return res.status(HttpStatus.BAD_REQUEST).send({message:"User already exists"})
+    
+        }
+    
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await this.userModel.create({ ...dto, password: hashedPassword });
+          
+        await this.companyModel.create({ ...companyInfo, user_id: user._id });
+    
+        const price = amount / 100;
+        await this.paymentModel.create({
+          user_id: user._id,
+          price,
+          currency,
+          paymentId,
+          current_date: new Date(),
+          paymentMode: paymentMode
+        });
+        const { password: _, ...userWithoutPassword } = user.toObject(); 
+        //const token = this.jwtService.sign({ id: user._id, email: user.email });
+    
+        // return { message: 'User created successfully', user: userWithoutPassword ,paymentMode: paymentMode};
+         return res.status(HttpStatus.CREATED).send({message: 'User created successfully', user: userWithoutPassword ,paymentMode: paymentMode})
+    
+        }catch(err){
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({message:err.message})
+        }
+      }
+
+        async createGuest(
+          files: Express.Multer.File[],
+          body: any,
+          user_id: any,
+          res,
+        ) {
+          try {
+            const {
+              first_name,
+              last_name,
+              company_name,
+              nationality,
+              document_type,
+              document_number,
+              telephone,
+              email,
+              check_in,
+              check_out,
+              message,
+              ...addressInfo
+            } = body;
+            if (files.length === 0) {
+              throw new BadRequestException('Please select atleast one file');
+            }
+      
+            const folderPath = path.join(__dirname, '..', '..', 'public', 'uploads');
+            if (!fs.existsSync(folderPath)) {
+              await mkdir(path.dirname(folderPath), { recursive: true });
+            }
+           
+            const fileData: string[] = [];
+      
+            for (const file of files) {
+              const ext = file.originalname.split('.').pop();
+              const filename = path.parse(file.originalname).name;
+              const filePath =
+                folderPath + '/' + filename + '-' + Date.now() + '.' + ext;
+      
+              await writeFile(filePath, file.buffer);
+              const fileBaseName = await path.basename(filePath);
+              fileData.push(fileBaseName);
+            }
+      
+            const data = {
+              first_name,
+              last_name,
+              company_name,
+              nationality,
+              document_type,
+              document_number,
+              telephone,
+              email,
+              // check_in,
+              // check_out,
+              // message,
+              // images: fileData,
+              user_id: new Types.ObjectId(user_id),
+            };
+            let guestData:any
+            const userExists = await this.guestModel.findOne({ email });
+            if (userExists) {
+              // throw new BadRequestException('Guest already exists');
+             guestData=userExists
+            }else{
+              guestData = await this.guestModel.create(data);
+            }
+      
+            
+            const reportData = {
+              check_in,
+              check_out,
+              message,
+              images: fileData,
+              guest_id: guestData._id,
+            };
+           
+            await this.reportModel.create(reportData);
+            if(!userExists){
+               const addressData = {
+              ...addressInfo,
+              guest_id: guestData._id,
+            };
+            await this.addressModel.create(addressData);
+            }
+            
+            // return {message:"Guest ragister successfully"}
+            return res
+              .status(HttpStatus.CREATED)
+              .send({ message: 'Guest ragister successfully' });
+          } catch (error) {
+            throw new InternalServerErrorException(error.message);
+          }
+        }
+
+
+
+        async createReport(
+          files: Express.Multer.File[],
+          body: any,
+      
+          res,
+        ) {
+          try {
+            const {
+             guestId,
+              check_in,
+              check_out,
+              message,
+              ...addressInfo
+            } = body;
+            if (files.length === 0) {
+              throw new BadRequestException('Please select atleast one file');
+            }
+      
+            const folderPath = path.join(__dirname, '..', '..', 'public', 'uploads');
+            if (!fs.existsSync(folderPath)) {
+              await mkdir(path.dirname(folderPath), { recursive: true });
+            }
+           
+            const fileData: string[] = [];
+      
+            for (const file of files) {
+              const ext = file.originalname.split('.').pop();
+              const filename = path.parse(file.originalname).name;
+              const filePath =
+                folderPath + '/' + filename + '-' + Date.now() + '.' + ext;
+      
+              await writeFile(filePath, file.buffer);
+              const fileBaseName = await path.basename(filePath);
+              fileData.push(fileBaseName);
+            }
+            
+            const reportData = {
+              check_in,
+              check_out,
+              message,
+              images: fileData,
+              guest_id: guestId,
+            };
+           
+            await this.reportModel.create(reportData);
+           
+            return res
+              .status(HttpStatus.CREATED)
+              .send({ message: 'Report ragister successfully' });
+          } catch (error) {
+            throw new InternalServerErrorException(error.message);
+          }
+        }
+
+        
     
 }
