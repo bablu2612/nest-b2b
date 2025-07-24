@@ -332,6 +332,8 @@ export class AdminService {
             if (!res) {
             throw new BadRequestException('Guest not deleted');
             }
+             await this.addressModel.deleteMany({ guest_id: { $in: ids.map((id)=> new Types.ObjectId(id)) } });
+             await this.reportModel.deleteMany({ guest_id: { $in: ids.map((id)=> new Types.ObjectId(id)) } });
             return { message: 'Guest deleted successfully' };
         }catch(err:any){
              throw new InternalServerErrorException(err.message);
