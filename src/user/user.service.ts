@@ -94,7 +94,7 @@ export class UserService {
 
   async getAllUsers(res) {
     try {
-      const users = this.userModel.aggregate([
+      const users = await this.userModel.aggregate([
         {
           $lookup: {
             from: 'companies',
@@ -113,6 +113,7 @@ export class UserService {
         },
         { $project: { password: 0 } },
       ]);
+      
       return res.status(HttpStatus.OK).send({ users })
     } catch (err) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: err.message })
@@ -144,19 +145,27 @@ export class UserService {
     return user;
   }
 
-  async updateUser(id: string, dto: UpdateUserDto) {
-    const { companyData, ...userData } = dto as any;
-    await this.userModel.findByIdAndUpdate(id, userData);
-    if (companyData) {
-      await this.companyModel.findOneAndUpdate({ user_id: id }, companyData);
+  async updateUser(id: string, dto: UpdateUserDto,res) {
+     const { f_name, l_name, amount, currency = 'chf', ...companyInfo } = dto;
+     console.log("companyInfo",companyInfo,"dto",dto)
+    try {
+      const user= await this.userModel.findByIdAndUpdate(id, {f_name,l_name},{new:true});
+      await this.companyModel.findOneAndUpdate({user_id: new Types.ObjectId(id)}, {...companyInfo},{new:true});
+
+      const price = amount / 100;
+       await this.paymentModel.findOneAndUpdate({user_id:new Types.ObjectId(id)}, {price,currency},{new:true});
+     
+      return res.status(HttpStatus.CREATED).send({ message: 'User updated successfully' })
+
+    }catch(err){
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: err.message })
     }
-    return { message: 'User updated successfully' };
   }
 
-  async deleteUser(ids) {
+  async deleteUser({ids}) {
     try {
       const res = await deleteData(ids, this.userModel)
-      await this.companyModel.deleteMany({ user_id: { $in: ids } });
+      await this.companyModel.deleteMany({ user_id: { $in: ids.map((id)=> new Types.ObjectId(id)) } });
       if (!res) {
         throw new BadRequestException('User not deleted');
       }

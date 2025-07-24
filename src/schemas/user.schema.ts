@@ -10,7 +10,7 @@ export class User {
   @Prop({ default: "pending" }) status: string;
   @Prop({ default: "user" }) role: string;
   @Prop() resetToken: string;
-  @Prop({ default: false }) resetStatus: Boolean;
+  // @Prop({ default: false }) resetStatus: Boolean;
   @Prop() resetTime: Date;
   
 }

@@ -45,8 +45,8 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Put('update/:id')
-  async updateUser(@Param('id') id: string, @Body() body: UpdateUserDto) {
-    return this.userService.updateUser(id, body);
+  async updateUser(@Param('id') id: string, @Body() body: UpdateUserDto,@Res() res:Response) {
+    return this.userService.updateUser(id, body,res);
   }
 
 
@@ -58,7 +58,6 @@ export class UserController {
   }
 @Post('check-email-exist')
   async checkEmailExist(@Body() body: CheckUserExistsDto,@Res() res:Response) {
-    
     return this.userService.checkEmailExist(body,res);
   }
 

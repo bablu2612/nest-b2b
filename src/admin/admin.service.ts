@@ -17,6 +17,7 @@ import { Payment, PaymentDocument } from 'src/schemas/payment.schema';
 import * as bcrypt from 'bcrypt';
 
 import { writeFile, mkdir } from 'fs/promises';
+import { UpdateUserDto } from 'src/user/dto/update-user.dto';
 
 @Injectable()
 export class AdminService {
@@ -312,10 +313,10 @@ export class AdminService {
         }
     }
     
-    async deleteUser(ids) {
+    async deleteUser({ids}) {
         try{
             const res = await deleteData(ids,this.userModel)
-            await this.companyModel.deleteMany({ user_id: { $in: ids } });
+            await this.companyModel.deleteMany({ user_id: { $in: ids.map((id)=> new Types.ObjectId(id)) } });
             if (!res) {
             throw new BadRequestException('User not deleted');
             }
@@ -325,7 +326,7 @@ export class AdminService {
         }
     }
     
-    async deleteGuest(ids) {
+    async deleteGuest({ids}) {
         try{
             const res = await deleteData(ids,this.guestModel);
             if (!res) {
@@ -337,7 +338,7 @@ export class AdminService {
         }
     }
 
-    async deleteReport(ids) {
+    async deleteReport({ids}) {
         try{
             const res = await deleteData(ids,this.reportModel);
             if (!res) {
@@ -386,7 +387,7 @@ export class AdminService {
       }
 
         async createGuest(
-          files: Express.Multer.File[],
+          // files: Express.Multer.File[],
           body: any,
           user_id: any,
           res,
@@ -406,27 +407,27 @@ export class AdminService {
               message,
               ...addressInfo
             } = body;
-            if (files.length === 0) {
-              throw new BadRequestException('Please select atleast one file');
-            }
+            // if (files.length === 0) {
+            //   throw new BadRequestException('Please select atleast one file');
+            // }
       
-            const folderPath = path.join(__dirname, '..', '..', 'public', 'uploads');
-            if (!fs.existsSync(folderPath)) {
-              await mkdir(path.dirname(folderPath), { recursive: true });
-            }
+            // const folderPath = path.join(__dirname, '..', '..', 'public', 'uploads');
+            // if (!fs.existsSync(folderPath)) {
+            //   await mkdir(path.dirname(folderPath), { recursive: true });
+            // }
            
-            const fileData: string[] = [];
+            // const fileData: string[] = [];
       
-            for (const file of files) {
-              const ext = file.originalname.split('.').pop();
-              const filename = path.parse(file.originalname).name;
-              const filePath =
-                folderPath + '/' + filename + '-' + Date.now() + '.' + ext;
+            // for (const file of files) {
+            //   const ext = file.originalname.split('.').pop();
+            //   const filename = path.parse(file.originalname).name;
+            //   const filePath =
+            //     folderPath + '/' + filename + '-' + Date.now() + '.' + ext;
       
-              await writeFile(filePath, file.buffer);
-              const fileBaseName = await path.basename(filePath);
-              fileData.push(fileBaseName);
-            }
+            //   await writeFile(filePath, file.buffer);
+            //   const fileBaseName = await path.basename(filePath);
+            //   fileData.push(fileBaseName);
+            // }
       
             const data = {
               first_name,
@@ -453,15 +454,15 @@ export class AdminService {
             }
       
             
-            const reportData = {
-              check_in,
-              check_out,
-              message,
-              images: fileData,
-              guest_id: guestData._id,
-            };
+            // const reportData = {
+            //   check_in,
+            //   check_out,
+            //   message,
+            //   images: fileData,
+            //   guest_id: guestData._id,
+            // };
            
-            await this.reportModel.create(reportData);
+            // await this.reportModel.create(reportData);
             if(!userExists){
                const addressData = {
               ...addressInfo,
@@ -493,7 +494,7 @@ export class AdminService {
               check_in,
               check_out,
               message,
-              ...addressInfo
+              // ...addressInfo
             } = body;
             if (files.length === 0) {
               throw new BadRequestException('Please select atleast one file');
@@ -522,7 +523,7 @@ export class AdminService {
               check_out,
               message,
               images: fileData,
-              guest_id: guestId,
+              guest_id: new Types.ObjectId(guestId),
             };
            
             await this.reportModel.create(reportData);
@@ -535,6 +536,22 @@ export class AdminService {
           }
         }
 
-        
+         async updateUser(id: string, dto: UpdateUserDto,res) {
+            const { f_name, l_name, amount, currency = 'chf', ...companyInfo } = dto;
+            console.log("companyInfo",companyInfo,"dto",dto)
+           try {
+
+             const user= await this.userModel.findByIdAndUpdate(id, {f_name,l_name},{new:true});
+             await this.companyModel.findOneAndUpdate({user_id: new Types.ObjectId(id)}, {...companyInfo},{new:true});
+       
+             const price = amount / 100;
+              await this.paymentModel.findOneAndUpdate({user_id:new Types.ObjectId(id)}, {price,currency},{new:true});
+            
+             return res.status(HttpStatus.CREATED).send({ message: 'User updated successfully' })
+       
+           }catch(err){
+             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: err.message })
+           }
+         } 
     
 }
