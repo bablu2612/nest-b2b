@@ -389,7 +389,6 @@ export class AdminService {
       }
 
         async createGuest(
-          // files: Express.Multer.File[],
           body: any,
           user_id: any,
           res,
@@ -404,32 +403,9 @@ export class AdminService {
               document_number,
               telephone,
               email,
-              check_in,
-              check_out,
-              message,
               ...addressInfo
             } = body;
-            // if (files.length === 0) {
-            //   throw new BadRequestException('Please select atleast one file');
-            // }
-      
-            // const folderPath = path.join(__dirname, '..', '..', 'public', 'uploads');
-            // if (!fs.existsSync(folderPath)) {
-            //   await mkdir(path.dirname(folderPath), { recursive: true });
-            // }
-           
-            // const fileData: string[] = [];
-      
-            // for (const file of files) {
-            //   const ext = file.originalname.split('.').pop();
-            //   const filename = path.parse(file.originalname).name;
-            //   const filePath =
-            //     folderPath + '/' + filename + '-' + Date.now() + '.' + ext;
-      
-            //   await writeFile(filePath, file.buffer);
-            //   const fileBaseName = await path.basename(filePath);
-            //   fileData.push(fileBaseName);
-            // }
+            
       
             const data = {
               first_name,
@@ -440,31 +416,16 @@ export class AdminService {
               document_number,
               telephone,
               email,
-              // check_in,
-              // check_out,
-              // message,
-              // images: fileData,
               user_id: new Types.ObjectId(user_id),
             };
             let guestData:any
             const userExists = await this.guestModel.findOne({ email });
             if (userExists) {
-              // throw new BadRequestException('Guest already exists');
-             guestData=userExists
+             guestData = userExists
             }else{
               guestData = await this.guestModel.create(data);
             }
       
-            
-            // const reportData = {
-            //   check_in,
-            //   check_out,
-            //   message,
-            //   images: fileData,
-            //   guest_id: guestData._id,
-            // };
-           
-            // await this.reportModel.create(reportData);
             if(!userExists){
                const addressData = {
               ...addressInfo,
@@ -473,7 +434,6 @@ export class AdminService {
             await this.addressModel.create(addressData);
             }
             
-            // return {message:"Guest ragister successfully"}
             return res
               .status(HttpStatus.CREATED)
               .send({ message: 'Guest ragister successfully' });
@@ -496,7 +456,6 @@ export class AdminService {
               check_in,
               check_out,
               message,
-              // ...addressInfo
             } = body;
             if (files.length === 0) {
               throw new BadRequestException('Please select atleast one file');
@@ -555,5 +514,45 @@ export class AdminService {
              return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: err.message })
            }
          } 
+
+
+
+           async updateGuest(id: string,body,res) {
+             try {
+              const {
+                first_name,
+                last_name,
+                company_name,
+                nationality,
+                document_type,
+                document_number,
+                telephone,
+                email,
+                ...addressInfo
+              } = body;
+              
+        
+              const data = {
+                first_name,
+                last_name,
+                company_name,
+                nationality,
+                document_type,
+                document_number,
+                telephone,
+              };
+            
+              await this.guestModel.findByIdAndUpdate(id, data,{new:true});
+              await this.addressModel.findOneAndUpdate({guest_id: new Types.ObjectId(id)}, addressInfo, {new:true});
+              return res.status(HttpStatus.CREATED).send({ message: 'Guest updated successfully' })
+       
+           }catch(err){
+             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: err.message })
+           }
+         } 
+
+
+
+         
     
 }

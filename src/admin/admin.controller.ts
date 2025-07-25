@@ -80,9 +80,15 @@ export class AdminController {
           }
 
           @UseGuards(JwtAuthGuard)
-          @Put('update/:id')
+          @Put('update-user/:id')
           async updateUser(@Param('id') id: string, @Body() body: UpdateUserDto,@Res() res:Response) {
             return this.adminService.updateUser(id, body,res);
+          }
+
+          @UseGuards(JwtAuthGuard)
+          @Put('update-guest/:id')
+          async updateGuest(@Param('id') id: string, @Body() body: any,@Res() res:Response) {
+            return this.adminService.updateGuest(id, body,res);
           }
     
 }

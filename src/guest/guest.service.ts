@@ -74,16 +74,11 @@ export class GuestService {
         document_number,
         telephone,
         email,
-        // check_in,
-        // check_out,
-        // message,
-        // images: fileData,
         user_id: new Types.ObjectId(user_id),
       };
       let guestData:any
       const userExists = await this.guestModel.findOne({ email });
       if (userExists) {
-        // throw new BadRequestException('Guest already exists');
        guestData=userExists
       }else{
         guestData = await this.guestModel.create(data);
@@ -99,6 +94,7 @@ export class GuestService {
       };
      
       await this.reportModel.create(reportData);
+
       if(!userExists){
          const addressData = {
         ...addressInfo,
