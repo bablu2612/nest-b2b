@@ -90,5 +90,14 @@ export class AdminController {
           async updateGuest(@Param('id') id: string, @Body() body: any,@Res() res:Response) {
             return this.adminService.updateGuest(id, body,res);
           }
+
+           @UseGuards(JwtAuthGuard)
+          @UseInterceptors(FilesInterceptor('files', 20, {
+          limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+          }))
+          @Put('update-report/:id')
+          async updateReport(@UploadedFiles() files: Express.Multer.File[],@Param('id') id: string, @Body() body: any,@Res() res:Response) {
+            return this.adminService.updateReport(id, body,files,res);
+          }
     
 }

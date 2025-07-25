@@ -364,7 +364,7 @@ export class AdminService {
         }
     
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = await this.userModel.create({ ...dto, password: hashedPassword });
+        const user = await this.userModel.create({ ...dto, password: hashedPassword, status: "approved" });
           
         await this.companyModel.create({ ...companyInfo, user_id: user._id });
     
@@ -485,6 +485,7 @@ export class AdminService {
               message,
               images: fileData,
               guest_id: new Types.ObjectId(guestId),
+              status: "approved"
             };
            
             await this.reportModel.create(reportData);
@@ -551,8 +552,64 @@ export class AdminService {
            }
          } 
 
+          async updateReport(id: string,body,files: Express.Multer.File[],res) {
+             try {
+              const {
+              check_in,
+              check_out,
+              message,
+            } = body;
 
+          const folderPath = path.join(__dirname, '..', '..', 'public', 'uploads');
+          let filesData:any
+          const fileData: string[] = [];
 
-         
+          const existReport=await this.reportModel.findById(id)
+          if(!existReport){
+            return res.status(HttpStatus.BAD_REQUEST).send({ message: 'Report does not exist' })
+          }
+
+            if (files.length === 0) {
+              filesData = existReport.images
+            }else{
+
+              if (!fs.existsSync(folderPath)) {
+                await mkdir(path.dirname(folderPath), { recursive: true });
+              }
+      
+              for (const file of existReport.images) {
+                const deleteFilePath = folderPath + '/' + file;
+                if (fs.existsSync(deleteFilePath)) {
+                    fs.unlinkSync(deleteFilePath)
+                }
+              }
+
+              for (const file of files) {
+                const ext = file.originalname.split('.').pop();
+                const filename = path.parse(file.originalname).name;
+                const filePath = folderPath + '/' + filename + '-' + Date.now() + '.' + ext;
+        
+                await writeFile(filePath, file.buffer);
+                const fileBaseName = await path.basename(filePath);
+                fileData.push(fileBaseName);
+              }
+
+              filesData = fileData
+            }
+          
+            const reportData = {
+              check_in,
+              check_out,
+              message,
+              images: filesData,
+            };
+           
+            await this.reportModel.findByIdAndUpdate(id, reportData,{new:true});
+            return res.status(HttpStatus.CREATED).send({ message: 'Report updated successfully' })
+       
+           }catch(err){
+             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: err.message })
+           }
+         } 
     
 }
