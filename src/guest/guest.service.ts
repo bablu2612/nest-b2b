@@ -38,6 +38,7 @@ export class GuestService {
         document_number,
         telephone,
         email,
+        birth_date,
         check_in,
         check_out,
         message,
@@ -74,6 +75,7 @@ export class GuestService {
         document_number,
         telephone,
         email,
+        birth_date,
         user_id: new Types.ObjectId(user_id),
       };
       let guestData:any
@@ -193,14 +195,14 @@ export class GuestService {
             });
             //match company name
             if (key === 'company_name' && value) {
-            comanyMatch = {
-  $match: {
-    company_name: {
-      $regex: `^${value.toString().trim()}$`,
-      $options: 'i', // makes it case-insensitive
-    },
-  },
-};
+              comanyMatch = {
+                $match: {
+                  company_name: {
+                    $regex: `^${value.toString().trim()}$`,
+                    $options: 'i', // makes it case-insensitive
+                  },
+                },
+              };
             }
             //match any three data
             anyThreeMatchConditions.push({

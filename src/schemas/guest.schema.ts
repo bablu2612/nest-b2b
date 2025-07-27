@@ -11,10 +11,8 @@ export class Guest {
   @Prop() document_number: string;
   @Prop() telephone: string;
   @Prop({ unique: true }) email: string;
-  // @Prop() check_in: string;
-  // @Prop() check_out: string;
-  // @Prop() message: string;
-  // @Prop() images: Array<string>;
+   @Prop({ unique: true }) birth_date: Date;
+
   @Prop({type:Types.ObjectId,ref:'User'}) user_id: Types.ObjectId;
 }
  

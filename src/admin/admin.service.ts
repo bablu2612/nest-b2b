@@ -47,17 +47,21 @@ export class AdminService {
         try{
             const { status, id } = body;
             const data =  await this.updateStatus(status, id, this.userModel);
-            const templatePath = status === "approved" ? path.join(__dirname, '..','..','src','mail','templates','approveUserTemplate.hbs'): path.join(__dirname,'..','..','src', 'mail','templates','disApproveUserTemplate.hbs');
-            const source = fs.readFileSync(templatePath, 'utf-8');
-            const template = handlebars.compile(source);
-            if(data){
-            const templateData=template({
-                    name: data.f_name + " " + data.l_name,
-                    email:data.email
-                })
-          
-            const subject="Regarding account approve"
-            await this.sendMail(data.email,subject,templateData)
+            // const templatePath = status === "approved" ? path.join(__dirname, '..','..','src','mail','templates','approveUserTemplate.hbs'): path.join(__dirname,'..','..','src', 'mail','templates','disApproveUserTemplate.hbs');
+           
+            if(status === "approved" ){
+               const templatePath =  path.join(__dirname, '..','..','src','mail','templates','approveUserTemplate.hbs')
+                const source = fs.readFileSync(templatePath, 'utf-8');
+                const template = handlebars.compile(source);
+                if(data){
+                const templateData=template({
+                        name: data.f_name + " " + data.l_name,
+                        email:data.email
+                    })
+              
+                const subject="Regarding account approve"
+                await this.sendMail(data.email,subject,templateData)
+            }
              return res.status(HttpStatus.OK).send({ message: "User updated successfully" })
             }else{
             return res.status(HttpStatus.OK).send({ message: "User not updated" })
@@ -70,14 +74,15 @@ export class AdminService {
      }
 
     async updateReportStatus(body,res){
-        const { status, id } = body;
+        const { status, id,note = "" } = body;
         try{
-            const data = await this.updateStatus(status,id,this.reportModel);
+            // const data = await this.updateStatus(status,id,this.reportModel);
+              const data = await this.reportModel.findByIdAndUpdate(id,{status,note},{new:true})
           
             const [guestData] = await this.guestModel.aggregate([
                 {
                     $match:{
-                        _id:data.guest_id
+                        _id:data?.guest_id
                     }
                 },
                 { 
@@ -93,17 +98,20 @@ export class AdminService {
                 }
             ]);
         
-            const templatePath = status === "approved" ? path.join(__dirname, '..','..','src','mail','templates','approveReportTemplate.hbs'): path.join(__dirname,'..','..','src', 'mail','templates','disApproveReportTemplate.hbs');
-            const source = fs.readFileSync(templatePath, 'utf-8');
-            const template = handlebars.compile(source);
-            if(data && guestData){
-            const templateData = template({
-                    name: guestData?.userData.f_name + " " + guestData.userData.l_name,
-                 
-                })
-          
-            const subject="Regarding report approve"
-            await this.sendMail(guestData.userData.email,subject,templateData)
+            // const templatePath = status === "approved" ? path.join(__dirname, '..','..','src','mail','templates','approveReportTemplate.hbs'): path.join(__dirname,'..','..','src', 'mail','templates','disApproveReportTemplate.hbs');
+            if(status === "approved" ){
+                const templatePath = path.join(__dirname, '..','..','src','mail','templates','approveReportTemplate.hbs');
+                const source = fs.readFileSync(templatePath, 'utf-8');
+                const template = handlebars.compile(source);
+                if(data && guestData){
+                const templateData = template({
+                        name: guestData?.userData.f_name + " " + guestData.userData.l_name,
+                    
+                    })
+              
+                const subject="Regarding report approve"
+                await this.sendMail(guestData.userData.email,subject,templateData)
+              }
                return res.status(HttpStatus.OK).send({ message: "Report updated successfully" });
             }else{
               return res.status(HttpStatus.OK).send({ message: "Report not updated" });
@@ -403,6 +411,7 @@ export class AdminService {
               document_number,
               telephone,
               email,
+              birth_date,
               ...addressInfo
             } = body;
             
@@ -416,6 +425,7 @@ export class AdminService {
               document_number,
               telephone,
               email,
+              birth_date,
               user_id: new Types.ObjectId(user_id),
             };
             let guestData:any
@@ -456,6 +466,7 @@ export class AdminService {
               check_in,
               check_out,
               message,
+             
             } = body;
             if (files.length === 0) {
               throw new BadRequestException('Please select atleast one file');
@@ -528,7 +539,8 @@ export class AdminService {
                 document_type,
                 document_number,
                 telephone,
-                email,
+                // email,
+                birth_date,
                 ...addressInfo
               } = body;
               
@@ -541,6 +553,7 @@ export class AdminService {
                 document_type,
                 document_number,
                 telephone,
+                birth_date
               };
             
               await this.guestModel.findByIdAndUpdate(id, data,{new:true});

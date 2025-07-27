@@ -9,7 +9,8 @@ export class Report {
   @Prop() message: string;
   @Prop() images: Array<string>;
   @Prop({type:Types.ObjectId,ref:'Guest'}) guest_id: Types.ObjectId;
-   @Prop({ default: "pending" }) status: string;
+  @Prop({ default: "pending" }) status: string;  //pending,approved,rejected
+  @Prop() note: string;
 }
  
 
