@@ -13,6 +13,8 @@ export class UpdateUserDto {
   // @IsString()
   // email?: string;
 
+ @IsOptional()
+    password?: string;
 
    @IsNotEmpty()
     amount: number;

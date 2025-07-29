@@ -146,10 +146,20 @@ export class UserService {
   }
 
   async updateUser(id: string, dto: UpdateUserDto,res) {
-     const { f_name, l_name, amount, currency = 'chf', ...companyInfo } = dto;
+     const { f_name, l_name, amount, currency = 'chf',password, ...companyInfo } = dto;
      console.log("companyInfo",companyInfo,"dto",dto)
     try {
-      const user= await this.userModel.findByIdAndUpdate(id, {f_name,l_name},{new:true});
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const updateData:{ [key: string]: any } = {
+          f_name,
+          l_name,
+        };
+
+        if (password) {
+          updateData.password = hashedPassword; 
+        }
+       
+      const user= await this.userModel.findByIdAndUpdate(id, updateData,{new:true});
       await this.companyModel.findOneAndUpdate({user_id: new Types.ObjectId(id)}, {...companyInfo},{new:true});
 
       const price = amount / 100;

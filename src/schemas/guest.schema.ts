@@ -11,7 +11,7 @@ export class Guest {
   @Prop() document_number: string;
   @Prop() telephone: string;
   @Prop({ unique: true }) email: string;
-   @Prop({ unique: true }) birth_date: Date;
+  @Prop({ unique: true }) birth_date: Date;
 
   @Prop({type:Types.ObjectId,ref:'User'}) user_id: Types.ObjectId;
 }
