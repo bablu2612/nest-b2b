@@ -8,6 +8,9 @@ export class Payment {
   @Prop()
   current_date: Date;
 
+   @Prop()
+  expiry_date: Date;
+
   @Prop()
   price: string;
 

@@ -377,12 +377,16 @@ export class AdminService {
         await this.companyModel.create({ ...companyInfo, user_id: user._id });
     
         const price = amount / 100;
+        const expiry_date=new Date()
+        expiry_date.setFullYear(expiry_date.getFullYear() + 1)
+      
         await this.paymentModel.create({
           user_id: user._id,
           price,
           currency,
           paymentId,
           current_date: new Date(),
+          expiry_date,
           paymentMode: paymentMode
         });
         const { password: _, ...userWithoutPassword } = user.toObject(); 

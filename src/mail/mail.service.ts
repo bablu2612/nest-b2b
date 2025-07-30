@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import * as dotenv from 'dotenv';
-export class mailService{
+export class MailService{
      private transporter = nodemailer.createTransport({
     // service: 'gmail', // or SMTP config
       host:'mail.infomaniak.com',

@@ -19,7 +19,7 @@ import { CreateUserDto } from '../user/dto/create-user.dto';
 import { LoginDto } from '../user/dto/login.dto';
 import { UpdateUserDto } from '../user/dto/update-user.dto';
 import { CheckUserExistsDto } from './dto/check-user-exist.dto';
-import { mailService } from 'src/mail/mail.service';
+import { MailService } from 'src/mail/mail.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as handlebars from 'handlebars';
@@ -39,7 +39,7 @@ export class UserService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
-    private readonly mailService: mailService,
+    private readonly mailService: MailService,
 
     private jwtService: JwtService,
   ) {
@@ -70,7 +70,8 @@ export class UserService {
       const user = await this.userModel.create({ ...dto, password: hashedPassword });
 
       await this.companyModel.create({ ...companyInfo, user_id: user._id });
-
+      const expiry_date=new Date()
+      expiry_date.setFullYear(expiry_date.getFullYear() + 1)
       const price = amount / 100;
       await this.paymentModel.create({
         user_id: user._id,
@@ -78,6 +79,7 @@ export class UserService {
         currency,
         paymentId,
         current_date: new Date(),
+        expiry_date: expiry_date,
         paymentMode: paymentMode
       });
       const { password: _, ...userWithoutPassword } = user.toObject();
