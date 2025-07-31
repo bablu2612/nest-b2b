@@ -432,7 +432,24 @@ export class UserService {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: error.message })
     }
   }
-
+ async updateUserSubscription(body,email, res) {
+    const { paymentMode,paymentId,amount} = body;
+    try {
+        const user = await this.userModel.findOne({ email })
+        if(!user){
+          return res.status(HttpStatus.BAD_REQUEST).send({ message: "user does not exist" })
+        }
+        const price = amount / 100;
+        const payment = await this.paymentModel.findOne({ user_id: user._id })
+        const expiry_date = payment?.expiry_date ? new Date(payment.expiry_date) : new Date()
+        expiry_date.setFullYear(expiry_date.getFullYear() + 1)
+        await this.paymentModel.findOneAndUpdate({ user_id: user._id, },{paymentId,paymentMode,price,expiry_date},{new:true}) 
+        return res.status(HttpStatus.OK).send({ message: "payment successfully"})
+       
+       } catch (error: any) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: error.message })
+    }
+  }
 
 
 }

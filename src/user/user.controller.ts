@@ -99,4 +99,12 @@ export class UserController {
       return this.userService.resetPassword(body,res);
     }
 
+  @UseGuards(JwtAuthGuard)
+  @Put('update-user-subscription')
+  async updateUserSubscription(@Req() req: Request, @Body() body: any,@Res() res:Response) {
+    const { email } = req.user as any;
+    return this.userService.updateUserSubscription(body,email,res);
+  }
+    
+
 }

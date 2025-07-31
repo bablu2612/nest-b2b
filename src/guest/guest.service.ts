@@ -206,21 +206,45 @@ export class GuestService {
               };
             }
             //match any three data
-            anyThreeMatchConditions.push({
-              $cond: [
-                {
-                  $eq: [
-                    { $toLower: `$${key}` },
-                    value.toString().toLowerCase().trim(),
+          const anyThreeKeys = ['first_name', 'last_name', 'birth_date', 'nationality', 'document_number'];
+          if (anyThreeKeys.includes(key) && value) {
+             if (key === 'birth_date') {
+                anyThreeMatchConditions.push({
+                  $cond: [
+                    {
+                      $eq: [
+                        {
+                          $dateToString: {
+                            format: "%d-%m-%Y",
+                            date: `$${key}`,
+                          },
+                        },
+                        value.trim(), // should be in DD-MM-YYYY format
+                      ],
+                    },
+                    1,
+                    0,
                   ],
-                },
-                1,
-                0,
-              ],
-            });
+                });
+              } else {
+                anyThreeMatchConditions.push({
+                  $cond: [
+                    {
+                      $eq: [
+                        { $toLower: `$${key}` },
+                        value.toString().toLowerCase().trim(),
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                });
+              }
+            }
           }
-        });
-      }
+        });  
+      
+    }
 
       if (matchConditions.length > 0) {
         pipeline.push({
