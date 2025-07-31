@@ -164,6 +164,7 @@ export class GuestService {
       preserveNullAndEmptyArrays: true
     }
   },
+  {$sort: {"createdAt": -1}},
 ]);
 
     return { guest: guestData };
@@ -295,7 +296,7 @@ export class GuestService {
 
   async searchGuestName(req) {
     const { search } = req.query;
-
+    const user_id = req.user.id;
     try {
       // const guest=await this.guestModel.find({
       //  $or:[{first_name:{$regex: search.trim(), $options:"i"}},{last_name:{$regex: search.trim(), $options:"i"}}]
@@ -327,6 +328,22 @@ export class GuestService {
         {
           $unwind: '$addressData',
         },
+         {
+          $lookup: {
+            from: 'users',
+            localField: 'user_id',
+            foreignField: '_id',
+            as: 'users',
+          },
+        },
+        {
+          $unwind: '$users',
+        },
+        {
+          $match:{
+            user_id: new Types.ObjectId(user_id) 
+          }
+        }
       ]);
 
       return { guest };

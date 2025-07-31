@@ -168,8 +168,12 @@ export class AdminService {
                     as: 'paymentData',
                 },
             }
+          const matchCondition =   {
+          $match: {
+            role: { $nin: ['admin']}}
+        }
        
-           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit,this.userModel,comanyLookup,paymentsookup,false,false,false,false)
+           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit,this.userModel,comanyLookup,paymentsookup,false,false,false,false,matchCondition)
            data.map((user)=>{
             return delete user.password 
            })
@@ -211,7 +215,7 @@ export class AdminService {
             const unwindUserData=false
        
 
-           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit, this.guestModel, addressLookup,reportsLookup,userLookup, unwindUserData,false,false)
+           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit, this.guestModel, addressLookup,reportsLookup,userLookup, unwindUserData,false,false,false)
             return res.status(HttpStatus.OK).send({data,totalCount,totalPages,page,limit})
          }catch(err:any){
             throw new InternalServerErrorException(err.message);
@@ -258,7 +262,7 @@ export class AdminService {
             }
        
 
-           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit, this.reportModel,guestLookup, addressLookup,userLookup, unwindUserData,unwindGuestData,unwindAddressData)
+           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit, this.reportModel,guestLookup, addressLookup,userLookup, unwindUserData,unwindGuestData,unwindAddressData,false)
            return res.status(HttpStatus.OK).send({data,totalCount,totalPages,page,limit})
          }catch(err:any){
             throw new InternalServerErrorException(err.message);
@@ -267,11 +271,17 @@ export class AdminService {
      }
      
 
- async getAllDataWithPagination(page,limit,model,lookup,paymentLookup,userLookup,unwindUser,unwindLookup,unwindPaymentLookup){
+ async getAllDataWithPagination(page,limit,model,lookup,paymentLookup,userLookup,unwindUser,unwindLookup,unwindPaymentLookup,matchCondition){
         try{
             const pageSize = +limit
             const skip = (page - 1) * limit;
+            // const sortData = {
+            //   $sort: {"createdAt": -1}
+            // }
             const pipeline = [
+              {
+                $sort: {"createdAt": -1}
+                },
                 {
                 $facet: {
                     paginatedResults: [
@@ -288,9 +298,13 @@ export class AdminService {
                     paginatedResults: 1,
                     total: { $arrayElemAt: ['$totalCount.total', 0] }
                 }
-                }
+                },
+                
             ];
-            
+            if(matchCondition){
+              pipeline.unshift(matchCondition) 
+            }
+
             if(unwindUser){
                 pipeline.unshift(unwindUser) 
             }
@@ -309,7 +323,8 @@ export class AdminService {
             }
               if(lookup){
                 pipeline.unshift(lookup) 
-            }
+            }   
+            
             
             const [result] = await model.aggregate(pipeline);
             const data = result.paginatedResults;

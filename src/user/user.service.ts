@@ -96,7 +96,12 @@ export class UserService {
 
   async getAllUsers(res) {
     try {
+
       const users = await this.userModel.aggregate([
+        {
+          $match: {
+            role: { $nin: ['admin']}}
+        },
         {
           $lookup: {
             from: 'companies',
@@ -114,6 +119,7 @@ export class UserService {
           },
         },
         { $project: { password: 0 } },
+         {$sort: {"createdAt": -1}},
       ]);
       
       return res.status(HttpStatus.OK).send({ users })
@@ -196,6 +202,14 @@ export class UserService {
           localField: '_id',
           foreignField: 'user_id',
           as: 'companyData',
+        },
+      },
+       {
+        $lookup: {
+          from: 'payments',
+          localField: '_id',
+          foreignField: 'user_id',
+          as: 'paymentData',
         },
       },
       { $project: { password: 0 } },
