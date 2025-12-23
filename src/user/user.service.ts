@@ -102,12 +102,37 @@ export class UserService {
                        de: "Bestätigung Ihrer Registrierung bei B2Binfo",
                        it: "Conferma della registrazione su B2Binfo"
                       }
+
+                    const  attachment= {
+                       en: {
+                            // Attachment from a file path
+                            filename: 'Attestation Compliance.pdf',
+                            path: path.join(__dirname, '..','..','src','mail','attachment','Attestation_Compliance_Certificate_EN-B2B_Info_2025 May 15 - VF.pdf')
+                        },
+                        fr: {
+                            // Attachment from a file path
+                            filename: 'AAttestation Conformite.pdf',
+                            path: path.join(__dirname, '..','..','src','mail','attachment','Attestation_Conformite_FR-B2B_Info_2025 mai 15 VF.pdf')
+                        },
+                        it: {
+                            // Attachment from a file path
+                            filename: 'Attestato Conformità.pdf',
+                            path: path.join(__dirname, '..','..','src','mail','attachment','Attestato_Conformità_IT-B2B_Info_2025 mai 15 VF.pdf')
+                        },
+                        de: {
+                            // Attachment from a file path
+                            filename: 'Bescheinigung Conformity.pdf',
+                            path: path.join(__dirname, '..','..','src','mail','attachment','Bescheinigung_Conformity_DE-B2B_Info_2025 Mai 15 - VF.pdf')
+                        },
+                      }
+      
       
                   
                        await this.mailService.send({
                         to: user.email,
                         subject: subject[lang],
                         html: templateData,
+                        attachments: [attachment[lang]]
                       });
 
 

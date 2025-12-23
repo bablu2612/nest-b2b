@@ -7,14 +7,14 @@ export class MailService{
 
       host:'mail.infomaniak.com',
       port:465,
-    auth: {
-      user: process.env.FROM_EMAIL,
-      pass: process.env.FROM_PASS,
-    },
-  });
+      auth: {
+        user: process.env.FROM_EMAIL,
+        pass: process.env.FROM_PASS,
+      },
+    });
   
-  async send(options: { to: string; subject: string; html: string }) {
-    const { to, subject, html } = options;
+  async send(options: { to: string; subject: string; html: string,attachments?: any[]; }) {
+    const { to, subject, html,attachments = [] } = options;
     
    const sendMail= await this.transporter.sendMail({
     //   from: `"My App" <${process.env.FROM_EMAIL}>`,
@@ -22,6 +22,7 @@ export class MailService{
       to,
       subject,
       html,
+      attachments,
     });
     console.log("sendMail",sendMail)
   }
