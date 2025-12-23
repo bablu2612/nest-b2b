@@ -18,10 +18,12 @@ import * as bcrypt from 'bcrypt';
 
 import { writeFile, mkdir } from 'fs/promises';
 import { UpdateUserDto } from 'src/user/dto/update-user.dto';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AdminService {
      private transporter: nodemailer.Transporter;
+      
     constructor(
         @InjectModel(User.name) private userModel: Model<UserDocument>,
         @InjectModel(Report.name) private reportModel: Model<ReportDocument>,
@@ -29,28 +31,35 @@ export class AdminService {
         @InjectModel(Address.name) private addressModel: Model<AddressDocument>,
         @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
         @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
+        private mailService: MailService,
         private jwtService: JwtService
+        
     ) {
          this.transporter = nodemailer.createTransport({
             // service: 'gmail', // or use `host`, `port`, `auth` for custom SMTP
+
+
+
             host:'mail.infomaniak.com',
             port:465,
 
             auth: {
-                 user: 'app@b2binfo.ch',
-                pass: '9g319#/FcALe-S_',
+                //  user: 'app@b2binfo.ch',
+                // pass: '9g319#/FcALe-S_',
+                  user: process.env.FROM_EMAIL,
+                  pass: process.env.FROM_PASS,
             },
         });
       }
 
-    async updateUserStatus(body,res){
+    async updateUserStatus(body,res,lang="en"){
         try{
             const { status, id } = body;
             const data =  await this.updateStatus(status, id, this.userModel);
             // const templatePath = status === "approved" ? path.join(__dirname, '..','..','src','mail','templates','approveUserTemplate.hbs'): path.join(__dirname,'..','..','src', 'mail','templates','disApproveUserTemplate.hbs');
            
             if(status === "approved" ){
-               const templatePath =  path.join(__dirname, '..','..','src','mail','templates','approveUserTemplate.hbs')
+               const templatePath =  path.join(__dirname, '..','..','src','mail','templates',lang,'approveUserTemplate.hbs')
                 const source = fs.readFileSync(templatePath, 'utf-8');
                 const template = handlebars.compile(source);
                 if(data){
@@ -59,8 +68,14 @@ export class AdminService {
                         email:data.email
                     })
               
-                const subject="Regarding account approve"
-                await this.sendMail(data.email,subject,templateData)
+                const subject={
+                 en: "Your B2Binfo account is now active",          //approved account
+                 fr: "Votre compte B2Binfo est maintenant actif",
+                 de: "Ihr B2Binfo-Konto ist jetzt aktiv",
+                 it: "Il tuo account B2Binfo è ora attivo"
+                }
+
+               await this.sendMail(data.email,subject[lang],templateData)
             }
              return res.status(HttpStatus.OK).send({ message: "User updated successfully" })
             }else{
@@ -136,7 +151,8 @@ export class AdminService {
      }
 
  async sendMail( to: string, subject: string,htmlContent:any): Promise<void>{
-    const from = "app@b2binfo.ch"
+    const from = process.env.FROM_EMAIL  //"app@b2binfo.ch"
+   
     const mailOptions: nodemailer.SendMailOptions = {
       from,
       to,
@@ -376,7 +392,7 @@ export class AdminService {
     }
 
     
-    async createUser(dto: CreateUserDto,res) {
+    async createUser(dto: CreateUserDto,res,lang) {
         const { email, password, amount, currency = 'chf', paymentMode=null,paymentId=null, ...companyInfo } = dto;
         try{
            const userExists = await this.userModel.findOne({ email });
@@ -408,6 +424,25 @@ export class AdminService {
         //const token = this.jwtService.sign({ id: user._id, email: user.email });
     
         // return { message: 'User created successfully', user: userWithoutPassword ,paymentMode: paymentMode};
+          const templatePath =  path.join(__dirname, '..','..','src','mail','templates',lang,'newUserRagisterByAdminTemplate.hbs')
+                              const source = fs.readFileSync(templatePath, 'utf-8');
+                              const template = handlebars.compile(source);
+                              
+                              const templateData=template({})
+                            
+                              const subject={
+                               en: "New registration awaiting approval",          //approved account
+                               fr: "Nouvelle inscription en attente de validation",
+                               de: "Neue Registrierung wartet auf Freigabe",
+                               it: "Nuova registrazione in attesa di approvazione"
+                              }
+                              const adminMail=process.env.ADMIN_EMAIL1 ?? "start@b2binfo.ch"
+                        
+                               await this.mailService.send({
+                                to: adminMail,
+                                subject: subject[lang],
+                                html: templateData,
+                              });
          return res.status(HttpStatus.CREATED).send({message: 'User created successfully', user: userWithoutPassword ,paymentMode: paymentMode})
     
         }catch(err){

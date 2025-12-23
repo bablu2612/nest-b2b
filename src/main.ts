@@ -42,10 +42,10 @@ async function bootstrap() {
 
   cron.schedule('0 0 * * *', async() => {
   console.log('Running daily task at 12 AM...');
-   await sendSubscriptionMail();
+   await sendSubscriptionMail("en");
 })
 
-   const sendSubscriptionMail = async()=> {
+   const sendSubscriptionMail = async(lang="en")=> {
       try {
         const users = await userModel.aggregate([
           {
@@ -68,14 +68,15 @@ async function bootstrap() {
         ]);
         const today = new Date()
         const tenDaysAgo = new Date()
-        tenDaysAgo.setDate(today.getDate() - 10)
+        
+        tenDaysAgo.setDate(today.getDate() + 10)
 
         const userEmails = users.filter((value)=>{
           const paymentExpDateStr = value.paymentData[0]?.expiry_date;
             if (!paymentExpDateStr) return false;
             const paymentExpDate = new Date(paymentExpDateStr)
             // console.log("users",value.paymentData,paymentExpDate)
-             console.log("users",paymentExpDate)
+            // console.log("users",paymentExpDate,"tenDaysAgo",tenDaysAgo)
             return paymentExpDate.toDateString() === tenDaysAgo.toDateString();
         })
         .map((user)=>user.email)
@@ -83,7 +84,7 @@ async function bootstrap() {
           console.log('Emails with payment exactly 10 days ago:', userEmails);
 
 
-           const templatePath = path.join(__dirname, '..', 'src', 'mail', 'templates', 'subscriptionReminderTemplate.hbs');
+           const templatePath = path.join(__dirname, '..', 'src', 'mail', 'templates',lang, 'subscriptionReminderTemplate.hbs');
                 const source = fs.readFileSync(templatePath, 'utf-8');
                 const template = handlebars.compile(source);
           
@@ -91,11 +92,16 @@ async function bootstrap() {
                   // email:email
                 });
           
-
+              const sub={
+                en: "Reminder – Your B2Binfo subscription will expire soon",
+                fr:"Rappel – Votre abonnement B2Binfo arrive bientôt à échéance",
+                de: "Erinnerung – Ihr B2Binfo-Abonnement läuft bald ab",
+                it: "Promemoria – Il tuo abbonamento B2Binfo scadrà presto"
+              }
              for(const email of userEmails){
                 await mailService.send({
                   to: email,
-                  subject: 'Renewal subscription',
+                  subject: sub[lang],
                   html: templateData,
                 });
              }

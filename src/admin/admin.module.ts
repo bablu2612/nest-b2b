@@ -9,6 +9,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { Guest, GuestSchema } from 'src/schemas/guest.schema';
 import { Address, AddressSchema } from 'src/schemas/address.schema';
 import { Report, ReportSchema } from 'src/schemas/report.schema';
+import { MailService } from 'src/mail/mail.service';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
    imports: [
@@ -18,14 +20,18 @@ import { Report, ReportSchema } from 'src/schemas/report.schema';
         { name: Payment.name, schema: PaymentSchema },
         { name: Guest.name, schema: GuestSchema },
         { name: Address.name, schema: AddressSchema },
-        { name: Report.name, schema: ReportSchema }
+        { name: Report.name, schema: ReportSchema },
+        
       ]),
       JwtModule.register({
         secret: process.env.JWT_SECRET || 'fghjghgjhjghdsxzdxzdkhjk', // ✅ Fix is here
         signOptions: { expiresIn: '1d' },
       }),
+
+      MailModule
     ],
   controllers: [AdminController],
-  providers: [AdminService]
+  // providers: [AdminService,MailService]
+    providers: [AdminService,]
 })
 export class AdminModule {}

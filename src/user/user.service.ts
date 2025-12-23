@@ -56,9 +56,11 @@ export class UserService {
   }
 
 
-  async createUser(dto: CreateUserDto, res) {
+  async createUser(dto: CreateUserDto, res,lang="en") {
+
     const { email, password, amount, currency = 'chf', paymentMode, paymentId, ...companyInfo } = dto;
     try {
+      
       const userExists = await this.userModel.findOne({ email });
       if (userExists) {
         //throw new BadRequestException('User already exists');
@@ -82,10 +84,56 @@ export class UserService {
         expiry_date: expiry_date,
         paymentMode: paymentMode
       });
+      console.log("userddhg",user)
       const { password: _, ...userWithoutPassword } = user.toObject();
       //const token = this.jwtService.sign({ id: user._id, email: user.email });
 
       // return { message: 'User created successfully', user: userWithoutPassword ,paymentMode: paymentMode};
+
+      const templatePath =  path.join(__dirname, '..','..','src','mail','templates',lang,'userRagisterationTemplate.hbs')
+                      const source = fs.readFileSync(templatePath, 'utf-8');
+                      const template = handlebars.compile(source);
+                      
+                      const templateData=template({})
+                    
+                      const subject={
+                       en: "Confirmation of your registration on B2Binfo",          //ragister account mail to user
+                       fr: "Confirmation de votre inscription sur B2Binfo",
+                       de: "Bestätigung Ihrer Registrierung bei B2Binfo",
+                       it: "Conferma della registrazione su B2Binfo"
+                      }
+      
+                  
+                       await this.mailService.send({
+                        to: user.email,
+                        subject: subject[lang],
+                        html: templateData,
+                      });
+
+
+                      //payment receved mail to admin
+
+                      const templatePath1 =  path.join(__dirname, '..','..','src','mail','templates',lang,'paymentRecievedTemplate.hbs')
+                      const source1 = fs.readFileSync(templatePath1, 'utf-8');
+                      const template1 = handlebars.compile(source1);
+                      
+                      const templateData1=template1({})
+                    
+                      const subjectData={
+                       en: "New payment received",          //approved account
+                       fr: "Nouveau paiement reçu",
+                       de: "Neue Zahlung eingegangen",
+                       it: "Nuovo pagamento ricevuto"
+                      }
+      
+                   const adminMail = process.env.ADMIN_EMAIL ?? "admin@b2binfo.ch"
+                       await this.mailService.send({                       
+                        to: adminMail,  //admin
+                        subject: subjectData[lang],
+                        html: templateData1,
+                      });
+
+
       return res.status(HttpStatus.CREATED).send({ message: 'User created successfully', user: userWithoutPassword, paymentMode: paymentMode })
 
     } catch (err) {

@@ -13,7 +13,9 @@ export class AdminController {
      @UseGuards(JwtAuthGuard)
       @Post('update-user-status')
       async updateUserStatus(@Body() body: UpdateStatusDto,@Req() req: Request,@Res() res:Response) {
-        return this.adminService.updateUserStatus(body,res);
+        const lang = req.headers["accept-language"] || "EN"
+        return this.adminService.updateUserStatus(body,res,lang.toLowerCase());
+
       }
       @UseGuards(JwtAuthGuard)
       @Post('update-report-status')
@@ -59,8 +61,10 @@ export class AdminController {
 
        @UseGuards(JwtAuthGuard)
        @Post('create-user')
-        async createUser(@Body() body: CreateUserDto,@Res() res:Response) {
-          return this.adminService.createUser(body,res);
+        async createUser(@Body() body: CreateUserDto,@Res() res:Response,@Req() req: Request) {
+             
+        const lang = req.headers["accept-language"] || "EN"
+          return this.adminService.createUser(body,res,lang.toLowerCase());
         }
 
         @UseGuards(JwtAuthGuard)

@@ -27,8 +27,9 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('sign-up')
-  async createUser(@Body() body: CreateUserDto,@Res() res:Response) {
-    return this.userService.createUser(body,res);
+  async createUser(@Body() body: CreateUserDto,@Req() req:Request,@Res() res:Response) {
+    const lang = req.headers["accept-language"] || 'EN'
+    return this.userService.createUser(body,res,lang.toLowerCase());
   }
 
   @UseGuards(JwtAuthGuard)

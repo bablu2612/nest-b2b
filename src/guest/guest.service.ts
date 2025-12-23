@@ -14,12 +14,16 @@ import { Model, Types } from 'mongoose';
 import { Guest, GuestDocument } from 'src/schemas/guest.schema';
 import { Address, AddressDocument } from 'src/schemas/address.schema';
 import { Report, ReportDocument } from 'src/schemas/report.schema';
+
+import { MailService } from 'src/mail/mail.service';
+import * as handlebars from 'handlebars';
 @Injectable()
 export class GuestService {
   constructor(
     @InjectModel(Guest.name) private guestModel: Model<GuestDocument>,
     @InjectModel(Report.name) private reportModel: Model<ReportDocument>,
     @InjectModel(Address.name) private addressModel: Model<AddressDocument>,
+     private readonly mailService: MailService,
   ) {}
 
   async createGuest(
@@ -27,6 +31,7 @@ export class GuestService {
     body: any,
     user_id: any,
     res,
+    lang="en"
   ) {
     try {
       const {
@@ -105,7 +110,27 @@ export class GuestService {
       await this.addressModel.create(addressData);
       }
       
-      // return {message:"Guest ragister successfully"}
+
+       const templatePath =  path.join(__dirname, '..','..','src','mail','templates',lang,'approveReportToAdminTemplate.hbs')
+                            const source = fs.readFileSync(templatePath, 'utf-8');
+                            const template = handlebars.compile(source);
+                            console.log("templatePath11111",templatePath)
+                            const templateData=template({})
+                          
+                            const subjectData={
+                             en: "New report awaiting approval",          //approved report mail
+                             fr: "Nouveau rapport en attente d’approbation",
+                             de: "Neuer Bericht wartet auf Genehmigung",
+                             it: "Nuovo rapporto in attesa di approvazione"
+                            }
+            
+                         const adminMail = process.env.ADMIN_EMAIL ?? "admin@b2binfo.ch"
+                             await this.mailService.send({                       
+                              to: adminMail,   //admin
+                              subject: subjectData[lang],
+                              html: templateData,
+                            });
+
       return res
         .status(HttpStatus.CREATED)
         .send({ message: 'Guest ragister successfully' });

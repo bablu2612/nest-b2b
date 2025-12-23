@@ -16,9 +16,10 @@ export class GuestController {
     limits: { fileSize: 50 * 1024 * 1024 }, // 5MB
     }))
     async createGuest( @UploadedFiles() files: Express.Multer.File[], @Body() body: any,@Req() req: Request,@Res() res:Response)  {
-
+    const lang = req.headers["accept-language"] || 'EN'
+        console.log("lang",lang)
         const { id } = (req as Request & { user: any }).user;
-        return this.guestService.createGuest(files,body,id,res);
+        return this.guestService.createGuest(files,body,id,res,lang.toLowerCase());
     }
 
  @UseGuards(JwtAuthGuard)

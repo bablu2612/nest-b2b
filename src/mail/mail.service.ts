@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 export class MailService{
      private transporter = nodemailer.createTransport({
     // service: 'gmail', // or SMTP config
+
       host:'mail.infomaniak.com',
       port:465,
     auth: {
@@ -11,10 +12,10 @@ export class MailService{
       pass: process.env.FROM_PASS,
     },
   });
-
+  
   async send(options: { to: string; subject: string; html: string }) {
     const { to, subject, html } = options;
-
+    
    const sendMail= await this.transporter.sendMail({
     //   from: `"My App" <${process.env.FROM_EMAIL}>`,
      from: process.env.FROM_EMAIL,

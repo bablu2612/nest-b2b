@@ -6,6 +6,7 @@ import { Guest, GuestSchema } from 'src/schemas/guest.schema';
 import { Address, AddressSchema } from 'src/schemas/address.schema';
 import { JwtModule } from '@nestjs/jwt';
 import { Report, ReportSchema } from 'src/schemas/report.schema';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { Report, ReportSchema } from 'src/schemas/report.schema';
         secret: process.env.JWT_SECRET || 'fghjghgjhjghdsxzdxzdkhjk', // ✅ Fix is here
         signOptions: { expiresIn: '1d' },
       }),
+      MailModule
     ],
   controllers: [GuestController],
   providers: [GuestService]
