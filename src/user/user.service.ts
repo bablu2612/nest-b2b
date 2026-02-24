@@ -233,13 +233,13 @@ export class UserService {
      const { f_name, l_name, amount, currency = 'chf',password, ...companyInfo } = dto;
      console.log("companyInfo",companyInfo,"dto",dto)
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
         const updateData:{ [key: string]: any } = {
           f_name,
           l_name,
         };
 
         if (password) {
+        const hashedPassword = await bcrypt.hash(password, 10);
           updateData.password = hashedPassword; 
         }
        
@@ -333,7 +333,7 @@ export class UserService {
       return res.status(HttpStatus.OK).send({ user: user, token, massage: "Login successfully" })
     } else {
 
-      return res.status(HttpStatus.OK).send({ user: user, massage: "Account is not varified yet" })
+      return res.status(HttpStatus.OK).send({ user: user, massage: "Account is not verified yet" })
     }
 
   }

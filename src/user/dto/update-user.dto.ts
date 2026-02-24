@@ -16,7 +16,7 @@ export class UpdateUserDto {
  @IsOptional()
     password?: string;
 
-   @IsNotEmpty()
+   @IsOptional()
     amount: number;
   
     @IsOptional()
