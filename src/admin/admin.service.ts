@@ -627,6 +627,7 @@ export class AdminService {
               message,
             } = body;
 
+
           const folderPath = path.join(__dirname, '..', '..', 'public', 'uploads');
           let filesData:any
           const fileData: string[] = [];
@@ -636,6 +637,7 @@ export class AdminService {
             return res.status(HttpStatus.BAD_REQUEST).send({ message: 'Report does not exist' })
           }
 
+         
             if (files.length === 0) {
               filesData = existReport.images
             }else{
@@ -663,14 +665,25 @@ export class AdminService {
 
               filesData = fileData
             }
-          
-            const reportData = {
+         type ReportData = {
+            check_in: any;
+            check_out: any;
+            message: any;
+            images: any;
+            status?: string;
+          };
+
+            let reportData: ReportData= {
               check_in,
               check_out,
               message,
               images: filesData,
             };
-           
+            
+             if(existReport.status === "rejected"){
+              reportData.status= "pending"
+
+          }
             await this.reportModel.findByIdAndUpdate(id, reportData,{new:true});
             return res.status(HttpStatus.CREATED).send({ message: 'Report updated successfully' })
        

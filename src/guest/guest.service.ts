@@ -345,25 +345,66 @@ export class GuestService {
 
   async searchGuestName(req) {
     const { search } = req.query;
+    console.log("req.query",req.query)
     const user_id = req.user.id;
     try {
       // const guest=await this.guestModel.find({
       //  $or:[{first_name:{$regex: search.trim(), $options:"i"}},{last_name:{$regex: search.trim(), $options:"i"}}]
       //   // last_name:{$regex: search.trim(), $options:"i"}
       // })
-      const guest = await this.guestModel.aggregate([
+
+
+
+      const searchValue = search.trim();
+      const searchParts = searchValue.split(/\s+/);
+
+      let orConditions : any[] = [
+          { first_name: { $regex: searchValue, $options: 'i' } },
+              { last_name: { $regex: searchValue, $options: 'i' } },
+              { company_name: { $regex: searchValue, $options: 'i' } },
+              { nationality: { $regex: searchValue, $options: 'i' } },
+              { document_type: { $regex: searchValue, $options: 'i' } },
+              { document_number: { $regex: searchValue, $options: 'i' } },
+              { telephone: { $regex: searchValue, $options: 'i' } },
+              { email: { $regex: searchValue, $options: 'i' } },
+        ]
+      
+
+    // If multiple words, match them in any order across first & last name
+    if (searchParts.length >= 2) {
+      orConditions.push(
         {
+        $and: searchParts.map(part => (
+          {
+          $or: [
+            { first_name: { $regex: part, $options: 'i' } },
+            { last_name: { $regex: part, $options: 'i' } }
+          ]
+        }))
+      });
+    }
+   
+      const guest = await this.guestModel.aggregate([
+        // {
+        //   $match: {
+        //     $or: [
+        //       { first_name: { $regex: search.trim(), $options: 'i' } },
+        //       { last_name: { $regex: search.trim(), $options: 'i' } },
+        //       { company_name: { $regex: search.trim(), $options: 'i' } },
+        //       { nationality: { $regex: search.trim(), $options: 'i' } },
+        //       { document_type: { $regex: search.trim(), $options: 'i' } },
+        //       { document_number: { $regex: search.trim(), $options: 'i' } },
+        //       { telephone: { $regex: search.trim(), $options: 'i' } },
+        //       { email: { $regex: search.trim(), $options: 'i' } },
+        //     ],
+        //   },
+        // },
+
+
+
+         {
           $match: {
-            $or: [
-              { first_name: { $regex: search.trim(), $options: 'i' } },
-              { last_name: { $regex: search.trim(), $options: 'i' } },
-              { company_name: { $regex: search.trim(), $options: 'i' } },
-              { nationality: { $regex: search.trim(), $options: 'i' } },
-              { document_type: { $regex: search.trim(), $options: 'i' } },
-              { document_number: { $regex: search.trim(), $options: 'i' } },
-              { telephone: { $regex: search.trim(), $options: 'i' } },
-              { email: { $regex: search.trim(), $options: 'i' } },
-            ],
+            $or: orConditions
           },
         },
         {

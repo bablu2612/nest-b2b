@@ -74,6 +74,7 @@ export class UserService {
       await this.companyModel.create({ ...companyInfo, user_id: user._id });
       const expiry_date=new Date()
       expiry_date.setFullYear(expiry_date.getFullYear() + 1)
+      //discount=amount * 50 / 100;
       const price = amount / 100;
       await this.paymentModel.create({
         user_id: user._id,
@@ -126,13 +127,14 @@ export class UserService {
                         },
                       }
       
-      
+                      const startMail = process.env.ADMIN_EMAIL1 ?? "start@b2binfo.ch"
                   
                        await this.mailService.send({
                         to: user.email,
                         subject: subject[lang],
                         html: templateData,
-                        attachments: [attachment[lang]]
+                        attachments: [attachment[lang]],
+                        replyTo: startMail
                       });
 
 
@@ -153,7 +155,8 @@ export class UserService {
       
                    const adminMail = process.env.ADMIN_EMAIL ?? "admin@b2binfo.ch"
                        await this.mailService.send({                       
-                        to: adminMail,  //admin
+                        // to: adminMail,  //admin
+                          to: startMail,  //admin
                         subject: subjectData[lang],
                         html: templateData1,
                       });

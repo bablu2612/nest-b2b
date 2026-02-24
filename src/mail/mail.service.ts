@@ -13,8 +13,8 @@ export class MailService{
       },
     });
   
-  async send(options: { to: string; subject: string; html: string,attachments?: any[]; }) {
-    const { to, subject, html,attachments = [] } = options;
+  async send(options: { to: string; subject: string; html: string,attachments?: any[]; replyTo?:string }) {
+    const { to, subject, html,attachments = [], replyTo="" } = options;
     
    const sendMail= await this.transporter.sendMail({
     //   from: `"My App" <${process.env.FROM_EMAIL}>`,
@@ -23,6 +23,7 @@ export class MailService{
       subject,
       html,
       attachments,
+      replyTo
     });
     console.log("sendMail",sendMail)
   }
