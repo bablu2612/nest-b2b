@@ -49,6 +49,7 @@ export class GuestService {
         message,
         ...addressInfo
       } = body;
+
       if (files.length === 0) {
         throw new BadRequestException('Please select atleast one file');
       }
@@ -84,14 +85,13 @@ export class GuestService {
         user_id: new Types.ObjectId(user_id),
       };
       let guestData:any
-      const userExists = await this.guestModel.findOne({ email });
+      const userExists = await this.guestModel.findOne({ email,document_number });
       if (userExists) {
        guestData=userExists
       }else{
         guestData = await this.guestModel.create(data);
       }
 
-      
       const reportData = {
         check_in,
         check_out,
@@ -453,4 +453,24 @@ export class GuestService {
       throw new InternalServerErrorException(err.message);
     }
   }
+
+   async validateEmailDocumentNumber(body:any,res) {
+    const { email,document_number } = body;
+  
+    try {
+        const userExists = await this.guestModel.findOne({ email });
+        if (userExists) {
+         return res.status(HttpStatus.BAD_REQUEST).send({ isEmailExist: true });
+        }
+
+        const documentNumberExists = await this.guestModel.findOne({document_number });
+        if (documentNumberExists) {
+          return res.status(HttpStatus.BAD_REQUEST).send({ isDocumentNumberExist: true });
+          }
+        return res.status(HttpStatus.OK).send({ isEmailExist: false ,isDocumentNumberExist: false});
+    } catch (err) {
+      throw new InternalServerErrorException(err.message);
+    }
+  }
+  
 }

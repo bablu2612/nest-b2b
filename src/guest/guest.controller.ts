@@ -46,7 +46,11 @@ export class GuestController {
        return this.guestService.getGuestById(req);
     }
 
-    
+     @UseGuards(JwtAuthGuard)
+     @Post('validate-email-documentNumber')
+       async validateEmailDocumentNumber( @Body() body: any,@Res() res:Response )  {
+       return this.guestService.validateEmailDocumentNumber(body,res);
+    }
 
 
 }
