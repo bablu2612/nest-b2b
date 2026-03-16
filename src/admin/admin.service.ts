@@ -483,7 +483,7 @@ export class AdminService {
               user_id: new Types.ObjectId(user_id),
             };
             let guestData:any
-            const userExists = await this.guestModel.findOne({ email,document_number });
+            const userExists = await this.guestModel.findOne({ document_number });
             if (userExists) {
              guestData = userExists
             }else{

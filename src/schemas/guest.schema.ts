@@ -8,10 +8,13 @@ export class Guest {
   @Prop() company_name: string;
   @Prop() nationality: string;
   @Prop() document_type: string;
-  @Prop() document_number: string;
+  @Prop({ unique: true }) document_number: string;
   @Prop() telephone: string;
-  @Prop({ unique: true }) email: string;
-  @Prop({ unique: true }) birth_date: Date;
+  // @Prop({ unique: true }) email: string;
+  //  @Prop({ unique: true }) birth_date: Date;
+
+   @Prop() email: string;
+  @Prop() birth_date: Date;
 
   @Prop({type:Types.ObjectId,ref:'User'}) user_id: Types.ObjectId;
 }
@@ -19,7 +22,3 @@ export class Guest {
 
 export type GuestDocument = Guest & Document;
 export const GuestSchema = SchemaFactory.createForClass(Guest);
-
-
-
-
