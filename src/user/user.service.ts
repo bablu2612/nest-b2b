@@ -117,8 +117,8 @@ export class UserService {
                         },
                         it: {
                             // Attachment from a file path
-                            filename: 'Attestato Conformità.pdf',
-                            path: path.join(__dirname, '..','..','src','mail','attachment','Attestato_Conformità_IT-B2B_Info_2025 mai 15 VF.pdf')
+                            filename: 'Attestato Conformita.pdf',
+                            path: path.join(__dirname, '..','..','src','mail','attachment','Attestato_Conformita_IT-B2B_Info_2025 mai 15 VF.pdf')
                         },
                         de: {
                             // Attachment from a file path
