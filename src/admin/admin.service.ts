@@ -189,7 +189,7 @@ export class AdminService {
             role: { $nin: ['admin']}}
         }
        
-           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit,this.userModel,comanyLookup,paymentsookup,false,false,false,false,matchCondition)
+           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit,this.userModel,comanyLookup,paymentsookup,false,false,false,false,matchCondition,false)
            data.map((user)=>{
             return delete user.password 
            })
@@ -229,9 +229,17 @@ export class AdminService {
                 },
             }
             const unwindUserData=false
-       
+            
+            const companyLookup= {
+              $lookup: {
+                from: 'companies',
+                localField: 'userData._id',
+                foreignField: 'user_id',
+                as: 'companyData',
+              },
+            }
 
-           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit, this.guestModel, addressLookup,reportsLookup,userLookup, unwindUserData,false,false,false)
+           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit, this.guestModel, addressLookup,reportsLookup,userLookup, unwindUserData,false,false,false,companyLookup)
             return res.status(HttpStatus.OK).send({data,totalCount,totalPages,page,limit})
          }catch(err:any){
             throw new InternalServerErrorException(err.message);
@@ -276,9 +284,17 @@ export class AdminService {
             const unwindUserData={
                 $unwind:'$userData'
             }
-       
+            const companyLookup= {
+              $lookup: {
+                from: 'companies',
+                localField: 'userData._id',
+                foreignField: 'user_id',
+                as: 'companyData',
+              },
+            }
 
-           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit, this.reportModel,guestLookup, addressLookup,userLookup, unwindUserData,unwindGuestData,unwindAddressData,false)
+
+           const {data,totalCount,totalPages} = await this.getAllDataWithPagination(page,limit, this.reportModel,guestLookup, addressLookup,userLookup, unwindUserData,unwindGuestData,unwindAddressData,false,companyLookup)
            return res.status(HttpStatus.OK).send({data,totalCount,totalPages,page,limit})
          }catch(err:any){
             throw new InternalServerErrorException(err.message);
@@ -287,7 +303,7 @@ export class AdminService {
      }
      
 
- async getAllDataWithPagination(page,limit,model,lookup,paymentLookup,userLookup,unwindUser,unwindLookup,unwindPaymentLookup,matchCondition){
+ async getAllDataWithPagination(page,limit,model,lookup,paymentLookup,userLookup,unwindUser,unwindLookup,unwindPaymentLookup,matchCondition,companyLookup){
         try{
             const pageSize = +limit
             const skip = (page - 1) * limit;
@@ -320,6 +336,9 @@ export class AdminService {
             if(matchCondition){
               pipeline.unshift(matchCondition) 
             }
+            if(companyLookup){
+              pipeline.unshift(companyLookup) 
+            }
 
             if(unwindUser){
                 pipeline.unshift(unwindUser) 
@@ -351,6 +370,9 @@ export class AdminService {
              throw new InternalServerErrorException(err.message);
         }
     }
+    
+
+
     
     async deleteUser({ids}) {
         try{

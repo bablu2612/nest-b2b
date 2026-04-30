@@ -191,6 +191,14 @@ export class GuestService {
       preserveNullAndEmptyArrays: true
     }
   },
+   {
+      $lookup: {
+        from: 'companies',
+        localField: 'userData._id',
+        foreignField: 'user_id',
+        as: 'companyData',
+      },
+    },
   {$sort: {"createdAt": -1}},
 ]);
 
@@ -340,6 +348,14 @@ export class GuestService {
       {
         $unwind: '$userData',
       },
+      {
+        $lookup: {
+          from: 'companies',
+          localField: 'userData._id',
+          foreignField: 'user_id',
+          as: 'companyData',
+        },
+      },
       ...pipeline,
     ]);
     return guestData;
@@ -431,6 +447,14 @@ export class GuestService {
         {
           $unwind: '$users',
         },
+        {
+        $lookup: {
+          from: 'companies',
+          localField: 'users._id',
+          foreignField: 'user_id',
+          as: 'companyData',
+        },
+      },
         {
           $match:{
             user_id: new Types.ObjectId(user_id) 
