@@ -19,10 +19,6 @@ import { PostModule } from './post/post.module';
       isGlobal: true,
       
      }),
-    // MongooseModule.forRoot('mongodb://localhost:27017/binfo'),
-    MongooseModule.forRoot('mongodb+srv://bk147411:XBVbf4QzcpqJA7JZ@movies-demo.ken32.mongodb.net/b2binfo?retryWrites=true&w=majority&appName=movies-demo'),
-    CategoryModule,
-
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
