@@ -8,7 +8,15 @@ export class CategoryController {
        @UseGuards(JwtAuthGuard)
            @Get('getAllCategory')
             async getAllGuest(@Req() req: Request )  {
-            //   const { id } = (req as Request & { user: any }).user;
               return this.categoryService.getAllCategory();
           }
+
+
+            @UseGuards(JwtAuthGuard)
+           @Get('get-Categories-Count')
+            async getCategoriesCountPost(@Req() req: Request )  {
+
+              return this.categoryService.getCategoriesCountPost();
+          }
+          
 }

@@ -415,7 +415,7 @@ export class AdminService {
 
     
     async createUser(dto: CreateUserDto,res,lang) {
-        const { email, password, amount, currency = 'chf', paymentMode=null,paymentId=null, ...companyInfo } = dto;
+        const { email, password,phone, amount, currency = 'chf', paymentMode=null,paymentId=null, ...companyInfo } = dto;
         try{
            const userExists = await this.userModel.findOne({ email });
         if (userExists) {
@@ -586,11 +586,11 @@ export class AdminService {
         }
 
          async updateUser(id: string, dto: UpdateUserDto,res) {
-            const { f_name, l_name, amount, currency = 'chf', ...companyInfo } = dto;
+            const { f_name, l_name,phone, amount, currency = 'chf', ...companyInfo } = dto;
             console.log("companyInfo",companyInfo,"dto",dto)
            try {
 
-             const user= await this.userModel.findByIdAndUpdate(id, {f_name,l_name},{new:true});
+             const user= await this.userModel.findByIdAndUpdate(id, {f_name,l_name,phone},{new:true});
              await this.companyModel.findOneAndUpdate({user_id: new Types.ObjectId(id)}, {...companyInfo},{new:true});
        
              const price = amount / 100;

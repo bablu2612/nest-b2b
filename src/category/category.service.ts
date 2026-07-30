@@ -48,4 +48,29 @@ export class CategoryService implements OnModuleInit{
         return {categories}
 
      }
+
+       async getCategoriesCountPost() {
+        const categories = await this.categoryModel.aggregate([
+            {
+                $lookup: {
+                from: 'posts',
+                localField: '_id',
+                foreignField: 'category_id',
+                as: 'postData'
+                }
+            },
+             {
+                $addFields: {
+                  postCount: { $size: "$postData" } // Counts array elements
+                }
+            },
+            {
+                $unset: "postData" // Optional: removes the array to save bandwidth
+            }
+        ]);
+        return {categories}
+
+     }
+
+     
 }

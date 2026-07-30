@@ -1,48 +1,43 @@
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { PostType } from "../enums/post-type.enum";
 
 export class CreatePostDto {
     @IsNotEmpty()
-      @IsString()
-      post_type: string;
+    @IsString()
+    @IsEnum(PostType)
+    post_type: PostType;
     
-      @IsNotEmpty()
-      @IsString()
-      category_id: string;
-    
-     @IsNotEmpty()
-      @IsString()
-      title: string;
-    
-       @IsNotEmpty()
-      @IsString()
-      description: string;
+    @IsNotEmpty()
+    @IsString()
+    category_id: string;
+  
+    @IsNotEmpty()
+    @IsString()
+    title: string;
+  
+    @IsNotEmpty()
+    @IsString()
+    description: string;
 
-        @IsNotEmpty()
-      @IsString()
-      currency: string;
-    
-       @IsNotEmpty()
-      @IsString()
-      price: string;
-    
-       @IsNotEmpty()
-      quantity: number;
+    @IsNotEmpty()
+    @IsString()
+    country: string;
 
+    @IsNotEmpty()
+    @IsString()
+    currency: string;
+  
+    @IsNotEmpty()
+    @IsString()
+    price: string;
+  
+    @IsNotEmpty()
+    quantity: number;
+
+    // Optional fields to pass address data
     
-    
-      // Optional fields to pass address data
-      
-      @IsOptional() additional_info?: string;
+    @IsOptional() additional_info?: string;
 
     //     @IsNotEmpty()
-    //   photos: Array<string>;
-
-    //    @IsNotEmpty()
-    //   @IsString()
-    //   user_id: string;
-
-      
-    
-    
-    
+    //   photos: Array<string>
 }

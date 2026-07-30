@@ -58,7 +58,7 @@ export class UserService {
 
   async createUser(dto: CreateUserDto, res,lang="en") {
 
-    const { email, password, amount, currency = 'chf', paymentMode, paymentId, ...companyInfo } = dto;
+    const { email, password, phone, amount, currency = 'chf', paymentMode, paymentId, ...companyInfo } = dto;
     try {
       
       const userExists = await this.userModel.findOne({ email });
@@ -230,12 +230,13 @@ export class UserService {
   }
 
   async updateUser(id: string, dto: UpdateUserDto,res) {
-     const { f_name, l_name, amount, currency = 'chf',password, ...companyInfo } = dto;
+     const { f_name, l_name, phone,amount, currency = 'chf',password, ...companyInfo } = dto;
      console.log("companyInfo",companyInfo,"dto",dto)
     try {
         const updateData:{ [key: string]: any } = {
           f_name,
           l_name,
+          phone,
         };
 
         if (password) {

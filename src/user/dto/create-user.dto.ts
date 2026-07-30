@@ -16,6 +16,10 @@ export class CreateUserDto {
   @IsString()
   password: string;
 
+    @IsNotEmpty()
+  @IsString()
+  phone: string;
+
   @IsNotEmpty()
   amount: number;
 
