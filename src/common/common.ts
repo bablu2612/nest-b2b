@@ -10,7 +10,7 @@ export const deleteData = async(ids, model) => {
     }
    
 }; 
-export const getAllDataWithPagination = async (
+export const getAllDataPostWithPagination = async (
   model: any,
   page: string = "1",
   limit:string = "10",
@@ -21,7 +21,8 @@ export const getAllDataWithPagination = async (
   categoryLookup?:any,
   unwindCategoryLookup?:any,
   match?:any,
-  sorting?:any
+  sorting?:any,
+  statusMatch?:any
  
 ) => {
   try {
@@ -30,7 +31,8 @@ export const getAllDataWithPagination = async (
     const limitNumber = parseInt(limit);
     const skip = (pageNumber - 1) * limitNumber;
     const paginationAggregate: any[] = [
-      {...sorting},
+        {...sorting},
+        {...statusMatch},
         {
             $facet: {
                 data: [
@@ -69,7 +71,7 @@ export const getAllDataWithPagination = async (
     }
 
 
-//    console.log("paginationAggregate",paginationAggregate)
+  //  console.log("paginationAggregate",paginationAggregate)
     const [result] = await model.aggregate(paginationAggregate);
     const total = result.pagination[0]?.total || 0;
     return {

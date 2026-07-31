@@ -7,7 +7,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import mongoose, { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Post, PostDocument } from 'src/schemas/post.schema';
-import { deleteData, getAllDataWithPagination } from 'src/common/common';
+import { deleteData, getAllDataPostWithPagination } from 'src/common/common';
 @Injectable()
 export class PostService {
   constructor(
@@ -71,9 +71,13 @@ export class PostService {
     try{
       const {page, limit, filters,sort_order="desc"} = req.query;
       const parseFilter = filters ? JSON.parse(filters) : [];
-      console.log("filter",parseFilter)
+      // console.log("filter",parseFilter)
 
       let match:any 
+       const statusMatch= {
+        $match:{
+           status:"online"
+      }}
       if(parseFilter.length > 0){
           match = {
           $match: {
@@ -91,6 +95,7 @@ export class PostService {
           } else {
             matchData[filter.key] = filter.value;
           }
+
           match.$match.$and.push(matchData)
         }
       }
@@ -132,7 +137,7 @@ export class PostService {
             const sorting={
                 $sort: { "createdAt": sort_order === "asc" ? 1: -1 } ,
             }
-    const {data,pagination} = await getAllDataWithPagination(this.postModel,page,limit,userLookup,unwindUser,companyLookup,unwindCompanyLookup,categoryLookup,unwindCategoryLookup,match,sorting)
+    const {data,pagination} = await getAllDataPostWithPagination(this.postModel,page,limit,userLookup,unwindUser,companyLookup,unwindCompanyLookup,categoryLookup,unwindCategoryLookup,match,sorting,statusMatch)
     return res.status(HttpStatus.OK).send({data,pagination,url: process.env.POST_BASE_URL})
   }catch(err){
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: err.message})
