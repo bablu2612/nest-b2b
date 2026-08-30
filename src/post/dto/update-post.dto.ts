@@ -25,6 +25,18 @@ export class UpdatePostDto extends PartialType(CreatePostDto) {
     @IsString()
     country: string;
 
+    @IsNotEmpty()
+    @IsString()
+    address: string;
+
+     @IsOptional()
+    @IsString()
+    lat: string;
+
+     @IsOptional()
+    @IsString()
+    long: string;
+
     
     @IsNotEmpty()
     @IsString()
@@ -34,6 +46,15 @@ export class UpdatePostDto extends PartialType(CreatePostDto) {
     @IsString()
     price: string;
 
+      @IsOptional()
+    @IsString()
+    weeklyPrice: string;
+
+     @IsOptional()
+    @IsString()
+    monthlyPrice: string;
+  
+
     @IsNotEmpty()
    quantity: number;
 
@@ -41,11 +62,18 @@ export class UpdatePostDto extends PartialType(CreatePostDto) {
   
    @IsOptional() additional_info?: string;
 
+      @IsNotEmpty()
+    condition: string;
+
+ @IsNotEmpty()
+    t: string;
+    
+    @IsOptional() existingPhotos?: Array<string>;
+
+    
+
 //     @IsNotEmpty()
 //   photos: Array<string>;
-
-
-          
         
         
     

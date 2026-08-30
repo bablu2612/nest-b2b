@@ -7,11 +7,14 @@ export class User {
   @Prop() l_name: string;
   @Prop({ unique: true }) email: string;
   @Prop() password: string;
+   @Prop() phone: string;
   @Prop({ default: "pending" }) status: string;
   @Prop({ default: "user" }) role: string;
   @Prop() resetToken: string;
   // @Prop({ default: false }) resetStatus: Boolean;
   @Prop() resetTime: Date;
+   
+  
   
 }
 

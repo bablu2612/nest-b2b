@@ -23,6 +23,18 @@ export class CreatePostDto {
     @IsString()
     country: string;
 
+     @IsNotEmpty()
+    @IsString()
+    address: string;
+
+     @IsOptional()
+    @IsString()
+    lat: string;
+
+     @IsOptional()
+    @IsString()
+    long: string;
+
     @IsNotEmpty()
     @IsString()
     currency: string;
@@ -30,6 +42,14 @@ export class CreatePostDto {
     @IsNotEmpty()
     @IsString()
     price: string;
+
+     @IsOptional()
+    @IsString()
+    weeklyPrice: string;
+
+     @IsOptional()
+    @IsString()
+    monthlyPrice: string;
   
     @IsNotEmpty()
     quantity: number;
@@ -37,6 +57,9 @@ export class CreatePostDto {
     // Optional fields to pass address data
     
     @IsOptional() additional_info?: string;
+
+     @IsNotEmpty()
+    condition: string;
 
     //     @IsNotEmpty()
     //   photos: Array<string>

@@ -38,16 +38,16 @@ export class PostController {
     limits: { fileSize: 50 * 1024 * 1024 }, // 5MB
     }))
     
-  
-  @Patch('updatePost/:id')
+   
+  @Post('updatePost/:id')
   update(@Param('id') id: string, @UploadedFiles() photos: Express.Multer.File[],@Body() updatePostDto: UpdatePostDto,@Req() req: Request,@Res() res:Response) {
-   // return this.postService.update(id,photos, updatePostDto,req,res);
+   return this.postService.update(id,photos, updatePostDto,req,res);
   }
 
    @UseGuards(JwtAuthGuard)
-  @Post('deletePost')
-  remove(@Req() req: Request,@Res() res:Response) {
-    return this.postService.remove(req,res);
+  @Put('updatePostStatus')
+  updatePostStatus(@Req() req: Request,@Res() res:Response) {
+    return this.postService.updatePostStatus(req,res);
   }
 
  @UseGuards(JwtAuthGuard)
@@ -62,5 +62,17 @@ export class PostController {
   getHistoryPost(@Req() req: Request,@Res() res:Response) {
       const { id } = (req as Request & { user: any }).user;
     return this.postService.getHistoryPost(id,req,res);
+  }
+
+ @UseGuards(JwtAuthGuard)
+    @Put('updateView/:id')
+  updateView(@Param('id') id: string,@Req() req: Request,@Res() res:Response) {
+   return this.postService.updateView(id,req,res);
+  }
+
+   @UseGuards(JwtAuthGuard)
+    @Get('getPostByCategoryId/:id')
+  getPostByCategoryId(@Param('id') id: string,@Req() req: Request,@Res() res:Response) {
+   return this.postService.getPostByCategoryId(id,req,res);
   }
 }
