@@ -10,7 +10,7 @@ import * as nodemailer from 'nodemailer';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as handlebars from 'handlebars';
-import { deleteData } from 'src/common/common';
+import { deleteData, getAllDataPostWithPagination } from 'src/common/common';
 import { Company, CompanyDocument } from 'src/schemas/company.schema';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { Payment, PaymentDocument } from 'src/schemas/payment.schema';
@@ -19,6 +19,7 @@ import * as bcrypt from 'bcrypt';
 import { writeFile, mkdir } from 'fs/promises';
 import { UpdateUserDto } from 'src/user/dto/update-user.dto';
 import { MailService } from 'src/mail/mail.service';
+import { Post, PostDocument } from 'src/schemas/post.schema';
 
 @Injectable()
 export class AdminService {
@@ -31,6 +32,7 @@ export class AdminService {
         @InjectModel(Address.name) private addressModel: Model<AddressDocument>,
         @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
         @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
+        @InjectModel(Post.name) private postModel: Model<PostDocument>,
         private mailService: MailService,
         private jwtService: JwtService
         
@@ -713,5 +715,67 @@ export class AdminService {
              return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: err.message })
            }
          } 
-    
+
+
+         async getAllPosts(req,res) {
+          try{
+            const {page, limit,} = req.query;
+           
+            const userLookup={
+              $lookup:{
+                from: 'users',
+                localField: 'user_id',
+                foreignField: '_id',
+                as: 'userData'
+              }
+            }
+            const unwindUser:any={
+              $unwind:'$userData'
+            }
+            const companyLookup={
+                $lookup: {
+                  from: 'companies',
+                  localField: 'userData._id',
+                  foreignField: 'user_id',
+                  as: 'companyData',
+                },
+            }
+             const unwindCompanyLookup:any={
+              $unwind:'$companyData'
+            }
+      
+             const categoryLookup={
+              $lookup:{
+                from: 'categories',
+                localField: 'category_id',
+                foreignField: '_id',
+                as: 'categoryData'
+              }
+            }
+            const unwindCategoryLookup:any={
+                    $unwind:'$categoryData'
+                  }
+                 
+          const {data,pagination} = await getAllDataPostWithPagination(this.postModel,page,limit,userLookup,unwindUser,companyLookup,unwindCompanyLookup,categoryLookup,unwindCategoryLookup,null,null,null )
+          return res.status(HttpStatus.OK).send({data,pagination,url: process.env.POST_BASE_URL})
+
+          }catch(err){
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: err.message })
+          }
+
+        }
+        async deletePost({ids}) {
+          try{
+          
+              const res = await deleteData(ids,this.postModel);
+              if (!res) {
+              throw new BadRequestException('Post not deleted');
+              }
+             
+            // await this.postModel.findByIdAndDelete(id);
+            return { message: 'Post deleted successfully' };
+          }catch(err:any){
+               throw new InternalServerErrorException(err.message);
+          }
+        }
 }

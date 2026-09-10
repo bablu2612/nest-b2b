@@ -11,6 +11,7 @@ import { Address, AddressSchema } from 'src/schemas/address.schema';
 import { Report, ReportSchema } from 'src/schemas/report.schema';
 import { MailService } from 'src/mail/mail.service';
 import { MailModule } from 'src/mail/mail.module';
+import { Post, PostSchema } from 'src/schemas/post.schema';
 
 @Module({
    imports: [
@@ -21,6 +22,7 @@ import { MailModule } from 'src/mail/mail.module';
         { name: Guest.name, schema: GuestSchema },
         { name: Address.name, schema: AddressSchema },
         { name: Report.name, schema: ReportSchema },
+        { name: Post.name, schema: PostSchema },
         
       ]),
       JwtModule.register({

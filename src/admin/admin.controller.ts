@@ -103,5 +103,18 @@ export class AdminController {
           async updateReport(@UploadedFiles() files: Express.Multer.File[],@Param('id') id: string, @Body() body: any,@Res() res:Response) {
             return this.adminService.updateReport(id, body,files,res);
           }
+
+
+          @UseGuards(JwtAuthGuard)
+          @Get('post/get-all-users-posts')
+          async getAllPosts(@Req() req:Request,@Res() res:Response) {
+            return this.adminService.getAllPosts(req,res);
+          }
+
+          @UseGuards(JwtAuthGuard)
+          @Put('post/delete-post')
+          async deletePost(@Body() body: DeleteUserDto) {
+            return this.adminService.deletePost(body);
+          }
     
-}
+} 

@@ -31,8 +31,10 @@ export const getAllDataPostWithPagination = async (
     const limitNumber = parseInt(limit);
     const skip = (pageNumber - 1) * limitNumber;
     const paginationAggregate: any[] = [
-        {...sorting},
-        {...statusMatch},
+        // {...sorting},
+        // {...statusMatch},
+        ...(sorting ? [{ ...sorting }] : []),
+        ...(statusMatch ? [{ ...statusMatch }] : []),
         {
             $facet: {
                 data: [
@@ -71,7 +73,7 @@ export const getAllDataPostWithPagination = async (
     }
 
 
-  //  console.log("paginationAggregate",paginationAggregate)
+   console.log("paginationAggregate",paginationAggregate)
     const [result] = await model.aggregate(paginationAggregate);
     const total = result.pagination[0]?.total || 0;
     return {
